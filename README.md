@@ -102,7 +102,7 @@ about
 796.5 ns on average per the benchmarking execution. The regex variants can be more accurate, and their logic is
 using a tried and
 tested framework, but they are significantly more expensive to run; the `WordBoundResolverRegex` that has no integrated
-lookahead/lookback features and replaces this absence with a custom post-process pass, is about 3 times slower
+lookahead/lookback features, replaces this absence with a custom post-process pass, and is about 3 times slower
 than the
 `WordBoundResolverRegexless` variant. The `WordBoundResolverFancyRegex` which makes use of the regex engine for all of
 its logic (including
