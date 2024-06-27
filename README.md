@@ -82,32 +82,41 @@ regarding the cost.
 
 ## Performance
 
-This repository contains code for three different methods to perform `word_bounds` operation - with standard `regex`,
-with `fancy_regex`, and a no-regex version. The performance of these methods is evaluated using `criterion`
+This repository contains three different methods to perform word bounds resolution - with standard `regex` crate,
+with `fancy_regex` crate, and a custom non-regex version.
+
+The performance of these methods is evaluated using `criterion`
 benchmarking library. See [benches/bench_word_bounds.rs](benches/bench_word_bounds.rs) for the benchmarking code and
-try it yourself. Here are the latest results:
+try it yourself. Here are the latest results on a macbook air m1 (which shows the relational performance, while the
+exacts
+will of course vary by system etc.):
 
-| Method                    | Execution Time      | Description                                                                                                                 |
-|---------------------------|---------------------|-----------------------------------------------------------------------------------------------------------------------------|
-| `word_bounds_regex`       | 16.670 µs (average) | Accurate and feature-rich, but 36x slower than `no_regex`. Suitable for non-critical performance paths.                     |
-| `word_bounds_fancy_regex` | 50.482 µs (average) | All-inclusive regex logic including lookahead/lookback, but 100x slower than `no_regex`. Use only when other variants fail. |
-| `word_bounds_no_regex`    | 459.17 ns (average) | Fastest and simplest, but could fail on certain edge cases. Officially suggested method for common cases.                   |
+| Trait                         | Execution Time      | Description                                                                                                                                                       |
+|-------------------------------|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `WordBoundResolverRegex`      | 2.275 µs (average)  | Accurate, but ~2.87x slower than `no_regex`. Suitable for non-critical performance paths.                                                                         |
+| `WordBoundResolverFancyRegex` | 6.0494 µs (average) | All-inclusive regex logic including lookahead/lookback, which should be even more accurate, but ~7.57x slower than `no_regex`. Use only when other variants fail. |
+| `WordBoundResolverRegexless`  | 796.5 ns (average)  | Fastest and simplest, but could fail on certain edge cases. Officially suggested method for common cases.                                                         |
 
-The Criterion benchmark results show that `word_bounds_no_regex` is the fastest yet simplest method, taking only about
-459.17 ns on average per the benchmarking execution. The regex variants can be more accurate, and their logic is
+The `criterion` benchmark results show that `WordBoundResolverRegexless` is the fastest yet simplest method, taking only
+about
+796.5 ns on average per the benchmarking execution. The regex variants can be more accurate, and their logic is
 using a tried and
-tested framework, but they are significantly more expensive to run; the regular `regex` that has no integrated
-lookahead/lookback features and replaces these with a post-process pass, is about 36 times slower than the
-`no_regex` variant. The `fancy_regex` that makes use of the regex engine for all of its logic (including
-lookahead/lookback), is more than 100 times slower than the `no_regex` variant.
+tested framework, but they are significantly more expensive to run; the `WordBoundResolverRegex` that has no integrated
+lookahead/lookback features and replaces this absence with a custom post-process pass, is about 3 times slower
+than the
+`WordBoundResolverRegexless` variant. The `WordBoundResolverFancyRegex` which makes use of the regex engine for all of
+its logic (including
+lookahead/lookback), is more than 7 times slower than the `WordBoundResolverRegexless` variant, though should yield
+the most accurate results.
 
-The official suggestion is to use `no_regex` (i.e neither `use_regex` nor `use_fancy_regex` features are enabled),
+The official suggestion is to use `WordBoundResolverRegexless` (i.e neither `use_regex`
+nor `use_fancy_regex` features are enabled),
 unless you face an edge case that isn't covered yet in the manual parsing logic. After that, you should test whether
-`regex` works, and if not, try `fancy_regex`.
+`WordBoundResolverRegex` works, and if not, try `WordBoundResolverFancyRegex`.
 
 > Note: Ultimately the costs are not usually all that significant, since this
 > shouldn't be called in any hot loops, but your mileage may vary. Any and all issues and pull requests are welcome,
-> if you face an edge case that isn't covered on the `no_regex` variant.
+> if you face an edge case that isn't covered on the `WordBoundResolverRegexless` variant.
 
 ## Example
 
