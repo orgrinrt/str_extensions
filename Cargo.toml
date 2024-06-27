@@ -1,0 +1,56 @@
+[package]
+name = "str_extensions"
+authors = ["orgrinrt", "Hiisi Digital"]
+version = "0.0.1"
+edition = "2021"
+description = """
+Useful extension methods for strings in Rust, carefully benchmarked and extensively configurable by feature flags to
+> minimise its footprint
+"""
+license = "MIT"
+license-file = "LICENSE"
+readme = "README.md"
+keywords = ["string", "format", "case", "snake", "camel"]
+categories = ["text-processing", "value-formatting", "development-tools", "gui", "localization"]
+documentation = "https://docs.rs/str_extensions"
+homepage = "https://github.com/orgrinrt/str_extensions"
+repository = "https://github.com/orgrinrt/str_extensions"
+
+[[bench]]
+name = "bench_word_bounds"
+harness = false
+
+[dev-dependencies]
+criterion = { version = "0.5.1" }
+
+[dependencies]
+regex = { version = "1.10.5", optional = true }
+fancy-regex = { version = "0.13.0", optional = true }
+once_cell = "1.8.0"
+
+[features]
+default = ["full_format", "full_building", "full_type_coercion", "use_regex"]
+# options
+use_fancy_regex = ["fancy-regex"]
+use_regex = ["regex"]
+optimize_for_memory = []
+optimize_for_cpu = []
+# format/case
+full_format = ["to_snake_case", "to_camel_case", "to_pascal_case", "to_kebab_case", "to_human_readable", "to_title_case"]
+to_snake_case = []
+to_camel_case = []
+to_pascal_case = []
+to_kebab_case = []
+to_human_readable = []
+to_title_case = []
+# building
+full_building = ["join", "append", "prepend"]
+join = []
+append = []
+prepend = []
+# type coercion
+full_type_coercion = ["as_cow", "into_arc"]
+as_cow = []
+into_arc = []
+# misc
+benchmark = ["regex", "fancy-regex", "optimize_for_cpu"]
