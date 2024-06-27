@@ -45,6 +45,7 @@ pub mod resolver {
     pub use crate::word_bounds::resolver::WordBoundResolver;
     pub use crate::word_bounds::resolver::WordBoundResolverLike;
     #[allow(unused_imports)]
+    #[cfg(any(feature = "optimize_for_cpu", feature = "optimize_for_memory"))]
     pub(crate) use crate::word_bounds::CHARS_PER_WORD_AVG;
 
     pub mod impls {
