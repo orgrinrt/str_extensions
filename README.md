@@ -83,7 +83,7 @@ regarding the cost.
 ## Performance
 
 This repository contains three different methods to perform word bounds resolution - with standard `regex` crate,
-with `fancy_regex` crate, and a custom non-regex version.
+with `fancy_regex` crate, and a custom regexless char-walking version.
 
 The performance of these methods is evaluated using `criterion`
 benchmarking library. See [benches/bench_word_bounds.rs](benches/bench_word_bounds.rs) for the benchmarking code and
@@ -108,6 +108,14 @@ than the
 its logic (including
 lookahead/lookback), is more than 7 times slower than the `WordBoundResolverRegexless` variant, though should yield
 the most accurate results.
+
+> Note: The regex variants are optimized, and in addition the crate has two different focuses for optimizations with
+> the feature flags
+`optimize_for_cpu` and
+`optimize_for_memory`. This is mostly relevant for someone doing extreme and picky optimizations on a larger project,
+> otherwise one should stick to the defaults. The
+> default configuration for optimizations bring the heaviest one, `fancy_regex` variant, down from around the 40 micro
+> second range to its current ~2 micro second range (with the same system as for the above benchmark results).
 
 The official suggestion is to use `WordBoundResolverRegexless` (i.e neither `use_regex`
 nor `use_fancy_regex` features are enabled),
