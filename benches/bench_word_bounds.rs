@@ -1,20 +1,19 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-use str_extensions::resolver::impls::{
-    WordBoundResolverFancyRegex, WordBoundResolverRegexless, WordBoundsResolverRegex,
-};
-use str_extensions::resolver::WordBoundResolverLike;
+use str_extensions::resolver::impls::{FancyRegex, Regex, Regexless, WordBoundResolverImpl};
+use str_extensions::resolver::rules::DefaultRules;
+use str_extensions::resolver::WordBoundResolver;
 
 fn word_bounds_fancy_regex(s: &str) -> Vec<String> {
-    WordBoundResolverFancyRegex::resolve(s)
+    WordBoundResolver::<FancyRegex, DefaultRules>::resolve(s)
 }
 
 fn word_bounds_regex(s: &str) -> Vec<String> {
-    WordBoundsResolverRegex::resolve(s)
+    WordBoundResolver::<Regex, DefaultRules>::resolve(s)
 }
 
 fn word_bounds_no_regex(s: &str) -> Vec<String> {
-    WordBoundResolverRegexless::resolve(s)
+    WordBoundResolver::<Regexless, DefaultRules>::resolve(s)
 }
 
 fn criterion_benchmark(c: &mut Criterion) {

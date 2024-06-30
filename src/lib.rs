@@ -27,7 +27,7 @@ pub(crate) mod type_coercion;
 
 #[cfg(not(feature = "benchmark"))]
 #[doc(hidden)]
-pub(crate) mod word_bounds;
+mod word_bounds;
 #[cfg(feature = "benchmark")]
 #[doc(hidden)]
 pub mod word_bounds;
@@ -43,16 +43,24 @@ pub mod prelude {
 
 pub mod resolver {
     pub use crate::word_bounds::resolver::WordBoundResolver;
-    pub use crate::word_bounds::resolver::WordBoundResolverLike;
     #[allow(unused_imports)]
     #[cfg(any(feature = "optimize_for_cpu", feature = "optimize_for_memory"))]
     pub(crate) use crate::word_bounds::CHARS_PER_WORD_AVG;
 
+    pub mod rules {
+        pub use crate::word_bounds::rules::*;
+    }
+
     pub mod impls {
         #[cfg(any(feature = "use_fancy_regex", feature = "benchmark"))]
-        pub use crate::word_bounds::impls::fancy_regex::WordBoundResolverFancyRegex;
+        pub use crate::word_bounds::impls::fancy_regex::FancyRegex;
         #[cfg(any(feature = "use_regex", feature = "benchmark"))]
-        pub use crate::word_bounds::impls::regex::WordBoundsResolverRegex;
-        pub use crate::word_bounds::impls::regexless::WordBoundResolverRegexless;
+        pub use crate::word_bounds::impls::regex::Regex;
+        pub use crate::word_bounds::impls::regexless::Regexless;
+        #[allow(unused_imports)]
+        pub(crate) use crate::word_bounds::resolver::{
+            contains_special_chars, is_special_char, remove_prepended_underscores,
+        };
+        pub use crate::word_bounds::WordBoundResolverImpl;
     }
 }
