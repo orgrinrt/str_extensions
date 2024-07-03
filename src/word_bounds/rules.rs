@@ -1,17 +1,49 @@
-use crate::resolver::rules::Direction::{Auto, Next, Previous};
-use crate::resolver::rules::IncludeMode::{Attach, Dedicated};
-use crate::resolver::rules::RemoveMode::All;
-use crate::resolver::rules::ResolverProcessingRule::{BoundEnd, BoundStart, Include, Remove};
+use crate::resolver::rules::RemoveMode::{All, Middle};
+use crate::resolver::rules::ResolverProcessingRule::{BoundEnd, BoundStart, Remove};
 use crate::resolver::rules::RuleTarget::{
-    Acronym, CaseChange, DetectionArtifacts, NonPunctSpecialChar, Numerics, PunctSpecialChar, Word,
+    Acronym, CaseChangeNonAcronym, Char, NonPunctSpecialChar, Numerics, PunctSpecialChar,
 };
+use crate::resolver::rules::Scope::FullInput;
 
 pub trait ResolverRules {
     /// The rules consider the chars in this string punctuation characters, delimiting words.
     ///
     /// This also means inversely, that non-punct chars are everything but these.
     fn punct_chars() -> String {
-        String::from("-_.,:;?!")
+        String::from(r"\-_\.,:;\?! \ \s")
+    }
+    fn punct_chars_allow_whitespace() -> String {
+        String::from(r"\-_\.,:;\?!")
+    }
+
+    fn non_punct_special_chars() -> String {
+        let mut exclude_chars = Self::punct_chars();
+
+        for rule in &Self::resolution_pass_rules() {
+            match rule {
+                Remove(Char(c), _) | BoundStart(Char(c)) | BoundEnd(Char(c)) => {
+                    exclude_chars.push_str(&format!("{}", *c));
+                },
+                _ => (),
+            }
+        }
+
+        format!(r"[^a-zA-Z0-9{}]", exclude_chars)
+    }
+
+    fn non_punct_special_chars_allow_whitespace() -> String {
+        let mut exclude_chars = Self::punct_chars_allow_whitespace();
+
+        for rule in &Self::resolution_pass_rules() {
+            match rule {
+                Remove(Char(c), _) | BoundStart(Char(c)) | BoundEnd(Char(c)) => {
+                    exclude_chars.push_str(&format!("{}", *c));
+                },
+                _ => (),
+            }
+        }
+
+        format!(r"[^a-zA-Z0-9{}]", exclude_chars)
     }
     /// These are operations and rules that are run on the entire input before we pass it on to the
     /// resolution step
@@ -42,15 +74,20 @@ impl ResolverRules for DefaultRules {
 
     fn resolution_pass_rules() -> Vec<ResolverProcessingRule> {
         vec![
-            Remove(DetectionArtifacts, All),
-            Include(Word, Dedicated),
-            Include(Acronym, Dedicated),
-            Include(NonPunctSpecialChar, Attach(Auto)),
-            Include(Numerics, Attach(Auto)),
-            BoundStart(CaseChange(Next)),
-            BoundEnd(CaseChange(Previous)),
+            Remove(PunctSpecialChar, Middle(FullInput)),
+            Remove(Char(' '), All),
+            BoundStart(CaseChangeNonAcronym),
+            BoundEnd(Acronym),
             BoundStart(PunctSpecialChar),
             BoundEnd(PunctSpecialChar),
+            BoundStart(Numerics),
+            BoundEnd(Numerics),
+            // commonly prefixes special chars that are not puncts
+            BoundStart(Char('#')),
+            // commonly postfixes special chars that are not puncts
+            BoundEnd(Char('%')),
+            BoundStart(NonPunctSpecialChar),
+            BoundEnd(NonPunctSpecialChar),
         ]
     }
 
@@ -59,44 +96,47 @@ impl ResolverRules for DefaultRules {
     }
 }
 
+#[derive(PartialEq)]
 pub enum Scope {
     SingleWord,
     FullInput, // i.e prepends only considered for first word, and appends for the last
 }
 
+#[derive(PartialEq)]
 pub enum RemoveMode {
     None,
     Prepended(Scope),
     Appended(Scope),
-    PrependedOrAppended(Scope),
+    Ends(Scope),
+    Middle(Scope),
     All,
 }
 
-pub enum IncludeMode {
-    Dedicated, // as its own word, separately
-    Attach(Direction),
-}
+// pub enum IncludeMode {
+//     Dedicated, // as its own word, separately
+//     Attach(Direction),
+// }
 
+#[derive(PartialEq)]
 pub enum RuleTarget {
     Word,
     String(String),
     Char(char),
     Numerics,
-    SpecialChars,
-    DetectionArtifacts,
     Acronym,
     PunctSpecialChar,
     NonPunctSpecialChar,
-    CaseChange(Direction),
+    CaseChangeNonAcronym,
 }
 
+#[derive(PartialEq)]
 pub enum ResolverProcessingRule {
     Remove(RuleTarget, RemoveMode),
-    Include(RuleTarget, IncludeMode),
     BoundStart(RuleTarget),
     BoundEnd(RuleTarget),
 }
 
+#[derive(PartialEq)]
 pub enum Direction {
     Previous,
     Next,

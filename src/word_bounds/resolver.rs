@@ -50,8 +50,9 @@ impl<'a, I: WordBoundResolverImpl<R>, R: ResolverRules> WordBoundResolver<'a, I,
     }
 
     #[inline]
-    pub fn run(&self) -> Vec<String> {
-        Self::resolve(self.input)
+    pub fn run(mut self) -> Self {
+        self.words = Self::resolve(self.input);
+        self
     }
 }
 
