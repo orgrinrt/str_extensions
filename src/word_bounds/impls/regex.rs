@@ -23,19 +23,18 @@ where
     R: 'static,
 {
     fn resolver(s: &str) -> Vec<String> {
-        dbg!(s);
         __str_ext__instance_words_vec!(s, words);
         __str_ext__init_capture_iter!(plain re, RE, Regex::<R>, captures_iter, s);
 
         let punct_chars = R::punct_chars_allow_whitespace();
         let non_punct_special_chars = R::non_punct_special_chars_allow_whitespace();
-        let puncts = RE::new(dbg!(&format!(r"[{}]", &punct_chars))).expect(
+        let puncts = RE::new(&format!(r"[{}]", &punct_chars)).expect(
             "Expected a valid \
         regex \
         pattern \
         for punct chars",
         );
-        let non_punct_specials = RE::new(dbg!(&format!(r"{}", &non_punct_special_chars))).expect(
+        let non_punct_specials = RE::new(&format!(r"{}", &non_punct_special_chars)).expect(
             "Expected\
          a valid regex pattern for \
         non-punct special chars",
@@ -57,7 +56,6 @@ where
             } else {
                 cap[0].to_owned()
             };
-            dbg!(&word);
             for rule in R::resolution_pass_rules() {
                 match rule {
                     ResolverProcessingRule::Remove(target, mode) => match target {
@@ -75,7 +73,7 @@ where
                             RemoveMode::Middle(scope) => match scope {
                                 Scope::FullInput => {
                                     if idx != 0 && idx != captures_len - 1 {
-                                        if puncts.is_match(dbg!(&word)) {
+                                        if puncts.is_match(&word) {
                                             remove_idxs.push(idx);
                                         } else {
                                             word = puncts.replace_all(&word, "").to_string();
@@ -113,10 +111,9 @@ where
                             let c_str = c.to_string();
                             if word == c_str {
                                 let i = s.find(&c_str).unwrap();
-                                if dbg!(s.get(i + 1..i + 2).unwrap()) == " " {
+                                if s.get(i + 1..i + 2).unwrap() == " " {
                                     continue;
                                 } else {
-                                    println!("::::::");
                                     remove_idxs.push(idx);
                                     c_str.clone_into(&mut attach_to_next);
                                 }
@@ -137,13 +134,10 @@ where
                                         &acc.chars().last().unwrap().to_string()
                                     };
                                     prev_was_split = 2;
-                                    return dbg!(format!(
+                                    return format!(
                                         "{}{}{}{}",
-                                        dbg!(acc_minus_one),
-                                        dbg!(acc_tail),
-                                        SPLIT_IN_POST_MARKER,
-                                        dbg!(c)
-                                    ));
+                                        acc_minus_one, acc_tail, SPLIT_IN_POST_MARKER, c
+                                    );
                                 } else if prev_was_lowcase == 0
                                     && c.is_lowercase()
                                     && prev_was_split == 0
@@ -157,13 +151,10 @@ where
                                         &acc.chars().last().unwrap().to_string()
                                     };
                                     prev_was_split = 2;
-                                    return dbg!(format!(
+                                    return format!(
                                         "{}{}{}{}",
-                                        dbg!(acc_minus_one),
-                                        SPLIT_IN_POST_MARKER,
-                                        dbg!(acc_tail),
-                                        dbg!(c)
-                                    ));
+                                        acc_minus_one, SPLIT_IN_POST_MARKER, acc_tail, c
+                                    );
                                 }
                                 prev_was_lowcase = if c.is_lowercase() { 1 } else { 0 };
                                 prev_was_split =
@@ -210,14 +201,6 @@ where
                             {
                                 continue;
                             }
-                            println!(
-                                "  START: RuleTarget::NonPunctSpecialChar >>  {} should match \
-                            regex: \
-                            {} = {}",
-                                &word,
-                                non_punct_specials,
-                                non_punct_specials.is_match(&word)
-                            );
                             if non_punct_specials.is_match(&word) {
                                 remove_idxs.push(idx);
                                 word.clone_into(&mut attach_to_next);
@@ -258,7 +241,8 @@ where
                             word = new;
                         },
                         RuleTarget::Acronym => {
-                            // NOTE: maybe CaseChangeNonAcronym should work here and this is
+                            // NOTE: maybe Case
+                            // ChangeNonAcronym should work here and this is
                             //      unnecessary
                         },
                         RuleTarget::PunctSpecialChar => {
@@ -283,14 +267,6 @@ where
                             {
                                 continue;
                             }
-                            println!(
-                                "  END: RuleTarget::NonPunctSpecialChar >>  {} should match \
-                            regex: \
-                            {} = {}",
-                                &word,
-                                non_punct_specials,
-                                non_punct_specials.is_match(&word)
-                            );
                             if non_punct_specials.is_match(&word) {
                                 remove_idxs.push(idx);
                                 let len = words.len();
