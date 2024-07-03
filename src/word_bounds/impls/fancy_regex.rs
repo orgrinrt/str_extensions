@@ -26,20 +26,20 @@ where
         __str_ext__init_capture_iter!(fancy re, RE, FancyRegex::<R>, captures_iter, s);
         let mut last = 0;
         for match_ in captures_iter {
-            let cap = dbg!(match_).expect("Unable to find capture");
+            let cap = match_.expect("Unable to find capture");
             let start = cap.start();
             let end = cap.end();
 
             if start > last {
                 let part = &s[last..start];
-                words.push(dbg!(part.to_lowercase()));
+                words.push(part.to_lowercase());
             }
 
             last = end;
         }
 
         if last < s.len() {
-            words.push(dbg!(s[(last)..].to_lowercase()));
+            words.push(s[(last)..].to_lowercase());
         }
 
         words
