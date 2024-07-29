@@ -51,11 +51,11 @@ macro_rules! __str_ext__impl_parsing_for_target {
     };
 }
 
-pub struct Regexless<R: ResolverRules = DefaultRules> {
+pub struct Charwalk<R: ResolverRules = DefaultRules> {
     _phantom_data: PhantomData<R>,
 }
 
-impl<R: ResolverRules> WordBoundResolverImpl<R> for Regexless<R> {
+impl<R: ResolverRules> WordBoundResolverImpl<R> for Charwalk<R> {
     fn resolver(s: &str) -> Vec<String> {
         __str_ext__instance_words_vec!(s, words);
         // dbg!(s);

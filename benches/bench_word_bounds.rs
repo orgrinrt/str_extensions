@@ -1,6 +1,6 @@
 use criterion::{black_box, criterion_group, criterion_main, Criterion};
 
-use str_extensions::resolver::impls::{FancyRegex, Regex, Regexless, WordBoundResolverImpl};
+use str_extensions::resolver::impls::{Charwalk, FancyRegex, Regex, WordBoundResolverImpl};
 use str_extensions::resolver::rules::DefaultRules;
 use str_extensions::resolver::WordBoundResolver;
 
@@ -12,8 +12,8 @@ fn word_bounds_regex(s: &str) -> Vec<String> {
     WordBoundResolver::<Regex, DefaultRules>::resolve(s)
 }
 
-fn word_bounds_no_regex(s: &str) -> Vec<String> {
-    WordBoundResolver::<Regexless, DefaultRules>::resolve(s)
+fn word_bounds_charwalk(s: &str) -> Vec<String> {
+    WordBoundResolver::<Charwalk, DefaultRules>::resolve(s)
 }
 
 fn criterion_benchmark(c: &mut Criterion) {
@@ -28,8 +28,8 @@ fn criterion_benchmark(c: &mut Criterion) {
         b.iter(|| word_bounds_fancy_regex(black_box(input)))
     });
 
-    c.bench_function("word_bounds_no_regex", |b| {
-        b.iter(|| word_bounds_no_regex(black_box(input)))
+    c.bench_function("word_bounds_charwalk", |b| {
+        b.iter(|| word_bounds_charwalk(black_box(input)))
     });
 }
 

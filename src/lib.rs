@@ -52,11 +52,11 @@ pub mod resolver {
     }
 
     pub mod impls {
+        pub use crate::word_bounds::impls::charwalk::Charwalk;
         #[cfg(any(feature = "use_fancy_regex", feature = "benchmark"))]
         pub use crate::word_bounds::impls::fancy_regex::FancyRegex;
         #[cfg(any(feature = "use_regex", feature = "benchmark"))]
         pub use crate::word_bounds::impls::regex::Regex;
-        pub use crate::word_bounds::impls::regexless::Regexless;
         #[allow(unused_imports)]
         pub(crate) use crate::word_bounds::resolver::{
             contains_special_chars, is_special_char, remove_prepended_underscores,

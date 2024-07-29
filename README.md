@@ -95,43 +95,44 @@ try it yourself. Here are the latest results on a macbook air m1 (which shows th
 exacts
 will of course vary by system etc.):
 
-| Trait                         | Execution Time       | Description                                                                                                                                                                                                                                 |
-|-------------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `WordBoundResolverRegex`      | 119.09  µs (average) | ⚠️ **Major WIP** </br>(More) Accurate, but currently ~50x slower than `no_regex`. Based on prior proof-of-concepts, we should ultimately land at around ~3x slower than the regexless variant. Suitable for non-critical performance paths. |
-| `WordBoundResolverFancyRegex` | 15.433  µs (average) | 🚧 **WIP, but almost there** </br>All-inclusive regex logic including lookahead/lookback, which should be even more accurate, but ~7x slower than `no_regex`. Use only when other variants fail.                                            |
-| `WordBoundResolverRegexless`  | 2.4 µs (average)     | ❎ **Just needs more optimization** </br>Fastest and simplest, but could fail on certain edge cases. Officially suggested method for common cases.                                                                                           |
+| Trait                         | Execution Time       | Description                                                                                                                                                                                                                                          |
+|-------------------------------|----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `WordBoundResolverRegex`      | 119.09  µs (average) | ⚠️ **Major WIP** </br>(More) Accurate, but currently ~50x <br/><br/>slower than `no_regex`. Based on prior proof-of-concepts, we should ultimately land at around ~3x slower than the charwalk variant. Suitable for non-critical performance paths. |
+| `WordBoundResolverFancyRegex` | 15.433  µs (average) | 🚧 **WIP, but almost there** </br>All-inclusive regex logic including lookahead/lookback, which should be even more accurate, but ~7x slower than `no_regex`. Use only when other variants fail.                                                     |
+| `WordBoundResolverCharwalk`   | 2.4 µs (average)     | ❎ **Just needs more optimization** </br>Fastest and simplest, but could fail on certain edge cases. Officially suggested method for common cases.                                                                                                    |
 
-The `criterion` benchmark results show that `WordBoundResolverRegexless` is the fastest yet simplest method, taking only
+The `criterion` benchmark results show that `WordBoundResolverCharwalk` is the fastest yet simplest method, taking only
 about
 2.4 µs on average per the benchmarking execution. The regex variants can be more accurate, and their logic is
 using a tried and
 tested framework, but they are significantly more expensive to run; the `WordBoundResolverRegex` that has no integrated
 lookahead/lookback features, replaces this absence with a custom post-process pass, and should be about 3 times slower
 than the
-`WordBoundResolverRegexless` variant (⚠️ *but is under construction and while it passes the tests, it's 50x slower at
+`WordBoundResolverCharwalk` variant (⚠️ *but is under construction and while it passes the tests, it's 50x slower at
 the moment* ⚠️). The
 `WordBoundResolverFancyRegex` which makes use of the regex
 engine for all of
 its logic (including
-lookahead/lookback), is more than 7 times slower than the `WordBoundResolverRegexless` variant, though should yield
+lookahead/lookback), is more than 7 times slower than the `WordBoundResolverCharwalk` variant, though should yield
 the most accurate results.
 
-> Note: The regex variants are optimized, and in addition the crate has two different focuses for optimizations with
+> Note: The regex variants are somewhat optimized, and in addition the crate has two different focuses for
+> optimizations with
 > the feature flags
 `optimize_for_cpu` and
 `optimize_for_memory`. This is mostly relevant for someone doing extreme and picky optimizations on a larger project,
 > otherwise one should stick to the defaults. The
 > default configuration for optimizations bring the heaviest one, `fancy_regex` variant, down from around the 40 micro
-> second range to its current ~2 micro second range (with the same system as for the above benchmark results).
+> second range to its current ~15 micro second range (with the same system as for the above benchmark results).
 
-The official suggestion is to use `WordBoundResolverRegexless` (i.e neither `use_regex`
+The official suggestion is to use `WordBoundResolverCharwalk` (i.e neither `use_regex`
 nor `use_fancy_regex` features are enabled),
 unless you face an edge case that isn't covered yet in the manual parsing logic. After that, you should test whether
 `WordBoundResolverRegex` works, and if not, try `WordBoundResolverFancyRegex`.
 
 > Note: Ultimately the costs are not usually all that significant, since this
 > shouldn't be called in any hot loops, but your mileage may vary. Any and all issues and pull requests are welcome,
-> if you face an edge case that isn't covered on the `WordBoundResolverRegexless` variant.
+> if you face an edge case that isn't covered on the `WordBoundResolverCharwalk` variant.
 
 ## Example
 

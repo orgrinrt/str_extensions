@@ -1,8 +1,8 @@
+pub(crate) mod charwalk;
 #[cfg(any(feature = "use_fancy_regex", feature = "benchmark"))]
 pub(crate) mod fancy_regex;
 #[cfg(any(feature = "use_regex", feature = "benchmark"))]
 pub(crate) mod regex;
-pub(crate) mod regexless;
 
 #[macro_export]
 macro_rules! __str_ext__instance_words_vec {

@@ -1,11 +1,11 @@
 use std::marker::PhantomData;
 
-use crate::resolver::impls::{Regexless, WordBoundResolverImpl};
+use crate::resolver::impls::{Charwalk, WordBoundResolverImpl};
 use crate::resolver::rules::{DefaultRules, ResolverRules};
 
 pub struct WordBoundResolver<
     'a,
-    I: WordBoundResolverImpl<R> = Regexless,
+    I: WordBoundResolverImpl<R> = Charwalk,
     R: ResolverRules = DefaultRules,
 > {
     _phantom_data: PhantomData<(I, R)>,
