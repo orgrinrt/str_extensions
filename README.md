@@ -21,6 +21,8 @@ including `String`, `Cow<str>` and `&str` itself.
 
 ### Formatting, cases
 
+❎ WIP: not yet implemented, but the underlying word bounding logic is fully implemented and passes
+rudimentary tests
 <details>
 <summary><code>trait CaseConversions</code> (click to open details)</summary>
 
@@ -37,20 +39,22 @@ including `String`, `Cow<str>` and `&str` itself.
 
 ### String building
 
+⚠️ WIP: Not completely implemented; Also unstable, unoptimized, not all impls match descriptions currently
 <details>
 <summary><code>trait StringBuildExtensions</code> (click to open details)</summary>
 
-| Function Name | Example                                                                           | Details                                                                                                                                                                                |
-|---------------|-----------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `join`        | `"foo".join("bar")` -> `"foobar"`</br> borrow -> owned                            | only naively functional, work in progress</br> has `(string)_strings`, `(string)_to_str`, `(str)_into_string` and `(str)_into_string_as_str` variants (plain join is between &strs)    | 
-| `concat`      | `"foo".concat(["bar", "bat"])` -> `"foobarbat"`</br>  borrow -> borrow            | only naively functional, work in progress</br> has `(string)_strings`, `(string)_to_str`, `(str)_into_string` and `(str)_into_string_as_str` variants (plain concat is between &strs)  | 
-| `append`      | `"foo".append("bar")` -> `"foobar"`</br>                         borrow -> borrow | only naively functional, work in progress</br> has `(string)_strings`, `(string)_to_str`, `(str)_into_string` and `(str)_into_string_as_str` variants (plain append is between &strs)  |
-| `prepend`     | `"foo".prepend("bar")` -> `"barfoo"`</br>                        borrow -> borrow | only naively functional, work in progress</br> has `(string)_strings`, `(string)_to_str`, `(str)_into_string` and `(str)_into_string_as_str` variants (plain prepend is between &strs) |
+| Function Name | Example                                                                           | Details                                   |
+|---------------|-----------------------------------------------------------------------------------|-------------------------------------------|
+| `join`        | `"foo".join("bar")` -> `"foobar"`</br> borrow -> owned                            | only naively functional, work in progress | 
+| `concat`      | `"foo".concat(["bar", "bat"])` -> `"foobarbat"`</br>  borrow -> borrow            | only naively functional, work in progress | 
+| `append`      | `"foo".append("bar")` -> `"foobar"`</br>                         borrow -> borrow | only naively functional, work in progress |
+| `prepend`     | `"foo".prepend("bar")` -> `"barfoo"`</br>                        borrow -> borrow | only naively functional, work in progress |
 
 </details>
 
 ### Type coercion
 
+⚠️ WIP: not yet implemented
 <details>
 <summary><code>trait StringTypeExtensions</code> (click to open details)</summary>
 
@@ -91,20 +95,23 @@ try it yourself. Here are the latest results on a macbook air m1 (which shows th
 exacts
 will of course vary by system etc.):
 
-| Trait                         | Execution Time      | Description                                                                                                                                                       |
-|-------------------------------|---------------------|-------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| `WordBoundResolverRegex`      | 2.275 µs (average)  | Accurate, but ~2.87x slower than `no_regex`. Suitable for non-critical performance paths.                                                                         |
-| `WordBoundResolverFancyRegex` | 6.0494 µs (average) | All-inclusive regex logic including lookahead/lookback, which should be even more accurate, but ~7.57x slower than `no_regex`. Use only when other variants fail. |
-| `WordBoundResolverRegexless`  | 796.5 ns (average)  | Fastest and simplest, but could fail on certain edge cases. Officially suggested method for common cases.                                                         |
+| Trait                         | Execution Time       | Description                                                                                                                                                                                                                                 |
+|-------------------------------|----------------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `WordBoundResolverRegex`      | 119.09  µs (average) | ⚠️ **Major WIP** </br>(More) Accurate, but currently ~50x slower than `no_regex`. Based on prior proof-of-concepts, we should ultimately land at around ~3x slower than the regexless variant. Suitable for non-critical performance paths. |
+| `WordBoundResolverFancyRegex` | 15.433  µs (average) | 🚧 **WIP, but almost there** </br>All-inclusive regex logic including lookahead/lookback, which should be even more accurate, but ~7x slower than `no_regex`. Use only when other variants fail.                                            |
+| `WordBoundResolverRegexless`  | 2.4 µs (average)     | ❎ **Just needs more optimization** </br>Fastest and simplest, but could fail on certain edge cases. Officially suggested method for common cases.                                                                                           |
 
 The `criterion` benchmark results show that `WordBoundResolverRegexless` is the fastest yet simplest method, taking only
 about
-796.5 ns on average per the benchmarking execution. The regex variants can be more accurate, and their logic is
+2.4 µs on average per the benchmarking execution. The regex variants can be more accurate, and their logic is
 using a tried and
 tested framework, but they are significantly more expensive to run; the `WordBoundResolverRegex` that has no integrated
-lookahead/lookback features, replaces this absence with a custom post-process pass, and is about 3 times slower
+lookahead/lookback features, replaces this absence with a custom post-process pass, and should be about 3 times slower
 than the
-`WordBoundResolverRegexless` variant. The `WordBoundResolverFancyRegex` which makes use of the regex engine for all of
+`WordBoundResolverRegexless` variant (⚠️ *but is under construction and while it passes the tests, it's 50x slower at
+the moment* ⚠️). The
+`WordBoundResolverFancyRegex` which makes use of the regex
+engine for all of
 its logic (including
 lookahead/lookback), is more than 7 times slower than the `WordBoundResolverRegexless` variant, though should yield
 the most accurate results.
