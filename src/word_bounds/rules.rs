@@ -12,6 +12,9 @@ pub trait ResolverRules {
     fn punct_chars() -> String {
         String::from(r"\-_\.,:;\?! \ \s")
     }
+    fn punct_chars_non_regex() -> String {
+        String::from("-_.,:;?! ")
+    }
     fn punct_chars_allow_whitespace() -> String {
         String::from(r"\-_\.,:;\?!")
     }
@@ -29,6 +32,29 @@ pub trait ResolverRules {
         }
 
         format!(r"[^a-zA-Z0-9{}]", exclude_chars)
+    }
+
+    fn non_punct_special_chars_non_regex() -> String {
+        let mut result: String = String::new();
+        let mut exclude_set = Self::punct_chars_non_regex()
+            .chars()
+            .collect::<std::collections::HashSet<_>>();
+        for rule in &Self::resolution_pass_rules() {
+            match rule {
+                Remove(Char(c), _) | BoundStart(Char(c)) | BoundEnd(Char(c)) => {
+                    exclude_set.insert(*c);
+                },
+                _ => (),
+            }
+        }
+        for i in vec![33..47, 58..64, 91..96, 123..127].into_iter().flatten() {
+            if let Some(c) = std::char::from_u32(i as u32) {
+                if !exclude_set.contains(&c) {
+                    result.push(c);
+                }
+            }
+        }
+        result
     }
 
     fn non_punct_special_chars_allow_whitespace() -> String {
@@ -134,6 +160,19 @@ pub enum ResolverProcessingRule {
     Remove(RuleTarget, RemoveMode),
     BoundStart(RuleTarget),
     BoundEnd(RuleTarget),
+}
+
+impl ResolverProcessingRule {
+    pub fn target(&self) -> Option<&RuleTarget> {
+        if let Remove(target, _) = self {
+            return Some(target);
+        } else if let BoundStart(target) = self {
+            return Some(target);
+        } else if let BoundEnd(target) = self {
+            return Some(target);
+        }
+        return None;
+    }
 }
 
 #[derive(PartialEq)]
