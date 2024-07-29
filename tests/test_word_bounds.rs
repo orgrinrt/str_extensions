@@ -4,7 +4,7 @@ mod tests {
     use str_extensions::resolver::impls::FancyRegex;
     #[cfg(any(feature = "use_regex", feature = "benchmark"))]
     use str_extensions::resolver::impls::Regex;
-    use str_extensions::resolver::impls::{Regexless, WordBoundResolverImpl};
+    use str_extensions::resolver::impls::{Charwalk, WordBoundResolverImpl};
     use str_extensions::resolver::rules::DefaultRules;
     use str_extensions::resolver::WordBoundResolver;
 
@@ -85,10 +85,10 @@ mod tests {
     }
 
     #[test]
-    fn test_word_bounds_no_regex() {
+    fn test_word_bounds_charwalk() {
         for (input, expected) in TEST_DEFAULT {
             assert_eq!(
-                WordBoundResolver::<Regexless, DefaultRules>::resolve(input),
+                WordBoundResolver::<Charwalk, DefaultRules>::resolve(input),
                 *expected
             );
         }
