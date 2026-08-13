@@ -1,5 +1,5 @@
 // Building
-pub(super) trait StringBuilding {
+pub trait StringBuilding {
     fn join(&self, other: &str) -> String;
     fn append(&self, other: &str) -> String;
     fn prepend(&self, other: &str) -> String;

@@ -2,7 +2,7 @@ use std::borrow::Cow;
 use std::sync::Arc;
 
 // Type Coercion
-pub(super) trait TypeCoercion {
+pub trait TypeCoercion {
     fn as_cow(&self) -> Cow<str>;
     fn into_arc(&self) -> Arc<String>;
 }

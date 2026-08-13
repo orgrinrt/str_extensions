@@ -1,6 +1,6 @@
 use std::borrow::Cow;
 
-pub(super) trait CaseConversions<'a, TOut: AsRef<str>>: AsRef<str> {
+pub trait CaseConversions<'a, TOut: AsRef<str>>: AsRef<str> {
     fn to_snake_case(&self) -> TOut;
     fn to_camel_case(&self) -> TOut;
     fn to_pascal_case(&self) -> TOut;
