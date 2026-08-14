@@ -3,16 +3,14 @@
 //! and no external crate could call any of them. This file is an external consumer, so it
 //! failing to compile is the regression.
 //!
-//! The assertions deliberately check reachability rather than formatting behaviour. The case
-//! conversions are still naive (`to_snake_case` currently returns its input unchanged), which the
-//! README documents as work in progress.
+//! The assertions check reachability rather than formatting behaviour; the conversions themselves
+//! are covered in `cases.rs`.
 
 use str_extensions::prelude::*;
 
 #[test]
 fn case_conversions_are_callable_from_another_crate() {
-    let out = "foo bar".to_snake_case();
-    assert!(!out.as_ref().is_empty());
+    assert_eq!("foo bar".to_snake_case(), "foo_bar");
 }
 
 #[test]
