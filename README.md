@@ -44,7 +44,8 @@ Acronyms stay whole (`JSONResponse` gives `json_response`) and digits bound a wo
 
 ### String building
 
-WIP: not all impls match their descriptions yet.
+Each of the four produces the result its row states. What is provisional is the surface, not the
+behaviour: these are naive implementations that build a new `String` on every call.
 <details>
 <summary><code>trait StringBuilding</code> (click to open details)</summary>
 
