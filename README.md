@@ -50,10 +50,10 @@ WIP: not all impls match their descriptions yet.
 
 | Function Name | Example                                                                  | Details                                   |
 |---------------|---------------------------------------------------------------------------|-------------------------------------------|
-| `join`        | `"foo".join("bar")` -> `"foobar"`</br> borrow -> owned                    | only naively functional, work in progress |
-| `concat`      | `"foo".concat(&["bar", "bat"])` -> `"foobarbat"`</br> borrow -> owned     | only naively functional, work in progress |
-| `append`      | `"foo".append("bar")` -> `"foobar"`</br> borrow -> owned                  | only naively functional, work in progress |
-| `prepend`     | `"foo".prepend("bar")` -> `"barfoo"`</br> borrow -> owned                 | only naively functional, work in progress |
+| `join`        | `"foo".join("bar")` -> `"foobar"`<br/> borrow -> owned                    | only naively functional, work in progress |
+| `concat`      | `"foo".concat(&["bar", "bat"])` -> `"foobarbat"`<br/> borrow -> owned     | only naively functional, work in progress |
+| `append`      | `"foo".append("bar")` -> `"foobar"`<br/> borrow -> owned                  | only naively functional, work in progress |
+| `prepend`     | `"foo".prepend("bar")` -> `"barfoo"`<br/> borrow -> owned                 | only naively functional, work in progress |
 
 </details>
 
