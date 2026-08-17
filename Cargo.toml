@@ -5,7 +5,6 @@ version = "0.0.1"
 edition = "2021"
 description = "Useful extension methods for strings in Rust, carefully benchmarked and extensively configurable by feature flags to minimise its footprint."
 license = "MIT"
-license-file = "LICENSE"
 readme = "README.md"
 keywords = ["string", "format", "case", "snake", "camel"]
 categories = ["text-processing", "value-formatting", "development-tools", "gui", "localization"]

@@ -13,8 +13,9 @@ str_extensions
 
 ## Usage
 
-These extensions are implemented for all types implementing `AsRef<str>`. This covers most of the usual string types,
-including `String`, `Cow<str>` and `&str` itself.
+The case conversions are implemented for all types implementing `AsRef<str>`. This covers most of the usual string
+types, including `String`, `Cow<str>` and `&str` itself. The string building and type coercion methods are implemented
+for `str`.
 
 ## Extensions
 
@@ -43,7 +44,7 @@ Acronyms stay whole (`JSONResponse` gives `json_response`) and digits bound a wo
 
 ### String building
 
-⚠️ WIP: not all impls match their descriptions yet.
+WIP: not all impls match their descriptions yet.
 <details>
 <summary><code>trait StringBuilding</code> (click to open details)</summary>
 
@@ -58,7 +59,7 @@ Acronyms stay whole (`JSONResponse` gives `json_response`) and digits bound a wo
 
 ### Type coercion
 
-⚠️ WIP: the conversions are implemented, the surface is not settled.
+WIP: the conversions are implemented, the surface is not settled.
 <details>
 <summary><code>trait TypeCoercion</code> (click to open details)</summary>
 
