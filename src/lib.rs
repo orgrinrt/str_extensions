@@ -40,9 +40,6 @@ pub mod prelude {
 /// segmentation rules lands in one place rather than two.
 pub mod resolver {
     pub use word_bounds::resolver::WordBoundResolver;
-    #[allow(unused_imports)]
-    #[cfg(any(feature = "optimize_for_cpu", feature = "optimize_for_memory"))]
-    pub(crate) use word_bounds::CHARS_PER_WORD_AVG;
 
     pub mod rules {
         pub use word_bounds::rules::*;
