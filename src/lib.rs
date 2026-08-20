@@ -25,13 +25,6 @@ pub(crate) mod cases;
 #[doc(hidden)]
 pub(crate) mod type_coercion;
 
-#[cfg(not(feature = "benchmark"))]
-#[doc(hidden)]
-mod word_bounds;
-#[cfg(feature = "benchmark")]
-#[doc(hidden)]
-pub mod word_bounds;
-
 pub mod prelude {
     #[allow(unused_imports)]
     pub use super::building::*;
@@ -41,26 +34,23 @@ pub mod prelude {
     pub use super::type_coercion::*;
 }
 
+/// Word segmentation, re-exported from the [`word_bounds`] crate.
+///
+/// The implementations used to be vendored here. They are one crate now, so a fix to the
+/// segmentation rules lands in one place rather than two.
 pub mod resolver {
-    pub use crate::word_bounds::resolver::WordBoundResolver;
-    #[allow(unused_imports)]
-    #[cfg(any(feature = "optimize_for_cpu", feature = "optimize_for_memory"))]
-    pub(crate) use crate::word_bounds::CHARS_PER_WORD_AVG;
+    pub use word_bounds::resolver::WordBoundResolver;
 
     pub mod rules {
-        pub use crate::word_bounds::rules::*;
+        pub use word_bounds::rules::*;
     }
 
     pub mod impls {
-        pub use crate::word_bounds::impls::charwalk::Charwalk;
+        pub use word_bounds::impls::charwalk::Charwalk;
         #[cfg(any(feature = "use_fancy_regex", feature = "benchmark"))]
-        pub use crate::word_bounds::impls::fancy_regex::FancyRegex;
+        pub use word_bounds::impls::fancy_regex::FancyRegex;
         #[cfg(any(feature = "use_regex", feature = "benchmark"))]
-        pub use crate::word_bounds::impls::regex::Regex;
-        #[allow(unused_imports)]
-        pub(crate) use crate::word_bounds::resolver::{
-            contains_special_chars, is_special_char, remove_prepended_underscores,
-        };
-        pub use crate::word_bounds::WordBoundResolverImpl;
+        pub use word_bounds::impls::regex::Regex;
+        pub use word_bounds::WordBoundResolverImpl;
     }
 }
