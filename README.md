@@ -51,10 +51,9 @@ behaviour: these are naive implementations that build a new `String` on every ca
 
 | Function Name | Example                                                                  | Details                                   |
 |---------------|---------------------------------------------------------------------------|-------------------------------------------|
-| `join`        | `"foo".join("bar")` -> `"foobar"`<br/> borrow -> owned                    | only naively functional, work in progress |
-| `concat`      | `"foo".concat(&["bar", "bat"])` -> `"foobarbat"`<br/> borrow -> owned     | only naively functional, work in progress |
-| `append`      | `"foo".append("bar")` -> `"foobar"`<br/> borrow -> owned                  | only naively functional, work in progress |
-| `prepend`     | `"foo".prepend("bar")` -> `"barfoo"`<br/> borrow -> owned                 | only naively functional, work in progress |
+| `append`      | `"foo".append("bar")` -> `"foobar"`<br/> borrow -> owned                  | one allocation                            |
+| `prepend`     | `"foo".prepend("bar")` -> `"barfoo"`<br/> borrow -> owned                 | one allocation                            |
+| `concat`      | `"foo".concat(&["bar", "bat"])` -> `"foobarbat"`<br/> borrow -> owned     | one allocation for the whole result       |
 
 </details>
 
@@ -142,9 +141,13 @@ assert_eq!("app".concat(&[".", "toml"]), "app.toml");
 
 Every assertion above was run against the crate rather than written from the method names.
 
-Two things about `StringBuilding` that its names do not tell you. **`join` takes no separator**: it
-concatenates, so `"a".join("b")` is `"ab"` and not `"a b"`. And **`join` and `append` are the same
-method**, the second calling the first. Prefer `append` and `prepend`, which say what they do.
+`StringBuilding` used to carry a `join` alongside `append`, doing the same thing under a name that
+already means something else: `[a, b].join(", ")` puts a separator between things, and this crate's own
+case conversions use it that way. `"a".join("b")` returning `"ab"` read as a bug at every call site
+where it was working as designed. It is gone; `append` says what it does.
+
+The three flags under `full_building` now each select their method. They used to decide only whether
+the module existed at all, so turning two off and one on gave you every method anyway.
 
 ## The Problem
 

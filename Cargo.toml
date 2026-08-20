@@ -33,10 +33,14 @@ to_kebab_case = []
 to_human_readable = []
 to_title_case = []
 # building
-full_building = ["join", "append", "prepend"]
-join = []
+# `join` was here and gated a method that did what `append` does, under a name that means
+# something else on a slice. Both are gone. `concat` had no flag of its own and now has
+# one, and each of the three genuinely selects its method rather than only deciding whether
+# the module exists.
+full_building = ["append", "prepend", "concat"]
 append = []
 prepend = []
+concat = []
 # type coercion
 full_type_coercion = ["as_cow", "into_arc"]
 as_cow = []
