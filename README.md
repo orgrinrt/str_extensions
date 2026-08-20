@@ -107,11 +107,55 @@ exclusive, and the default is `optimize_for_cpu`.
 
 ## Example
 
-TODO
+One name, carried through every spelling a codebase asks for. The conversions resolve word bounds
+rather than splitting on a delimiter, which is why `UserProfileSettings` comes apart correctly
+without being told where its words are.
+
+```rust
+use std::borrow::Cow;
+use str_extensions::prelude::*;
+
+// one concept, six spellings
+let ty: Cow<str> = "user profile settings".to_pascal_case();
+assert_eq!(ty, "UserProfileSettings");
+
+let field: Cow<str> = "UserProfileSettings".to_snake_case();
+assert_eq!(field, "user_profile_settings");
+
+let flag: Cow<str> = "UserProfileSettings".to_kebab_case();
+assert_eq!(flag, "user-profile-settings");
+
+let js: Cow<str> = "user_profile_settings".to_camel_case();
+assert_eq!(js, "userProfileSettings");
+
+let label: Cow<str> = "user_profile_settings".to_title_case();
+assert_eq!(label, "User Profile Settings");
+
+let prose: Cow<str> = "UserProfileSettings".to_human_readable();
+assert_eq!(prose, "user profile settings");
+
+// building, implemented on `str`
+assert_eq!("app".append(".toml"), "app.toml");
+assert_eq!(".toml".prepend("app"), "app.toml");
+assert_eq!("app".concat(&[".", "toml"]), "app.toml");
+```
+
+Every assertion above was run against the crate rather than written from the method names.
+
+Two things about `StringBuilding` that its names do not tell you. **`join` takes no separator**: it
+concatenates, so `"a".join("b")` is `"ab"` and not `"a b"`. And **`join` and `append` are the same
+method**, the second calling the first. Prefer `append` and `prepend`, which say what they do.
 
 ## The Problem
 
-TODO
+Rust gives you `to_uppercase` and `to_lowercase` and stops. Everything between a display label and an
+identifier is left to the caller, and the caller reaches for `split('_')`, which is wrong the moment
+the input is already camel case.
+
+Splitting on a delimiter cannot round-trip. `to_snake_case` on `UserProfileSettings` has no delimiter
+to split on, and `to_pascal_case` on `user profile settings` has a different one. The conversions here
+resolve word bounds first, through [`word_bounds`](https://github.com/orgrinrt/word_bounds), so any
+spelling converts to any other from any starting point.
 
 ## Support
 
