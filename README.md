@@ -66,7 +66,8 @@ WIP: the conversions are implemented, the surface is not settled.
 | Function Name | Example | Details                                                                                                |
 |---------------|---------|----------------------------------------------------------------------------------------------------------|
 | `as_cow`      |         | Free; cost only applies when mutating the string, which turns it into `Cow::Owned` state              |
-| `into_arc`    |         | Allocates a `String` and wraps it into an `Arc`                                                        |
+| `into_arc`    |         | Allocates a `String` and wraps it into an `Arc`. Two allocations and two hops to read a byte           |
+| `to_arc`      |         | One allocation and one hop, as `Arc<str>`. Prefer it unless the contents have to be mutable later      |
 
 </details>
 
@@ -147,6 +148,59 @@ Each flag under `full_building` selects its own method, so a build asking for `a
 gets `append` alone. Both directions are checked: `tests/feature_matrix.rs` builds a
 throwaway consumer against each selection and asserts that a method whose flag is off is
 genuinely absent, with the positive case beside it as the control.
+
+## Allocation
+
+Three positions, each a feature, and each of them built by `tests/feature_matrix.rs`.
+
+| Feature | What is available |
+|---|---|
+| default | Everything, against `std`. |
+| `no_std` | The same methods, against `alloc`. Every one of them returns something owned, so `alloc` is what they need. |
+| `no_alloc` | Adds `write_case`, which writes the converted text into storage the caller lends and allocates nothing. |
+
+`no_alloc` implies `no_std` and does not take the allocating conversions away.
+
+The allocating conversions segment into a `Vec<String>` and build a second string out of it,
+so a snake-case conversion is one allocation per word plus one for the vector plus one for
+the answer. `write_case` writes the answer as the words arrive: it implements
+`word_bounds`' word sink, so the separators and the capitals go in at the moments the
+segmentation reaches them.
+
+The block below is `ignore`, because a doctest compiles under whatever selection
+`cargo test --doc` ran with and this one needs `no_alloc`. The same two assertions are
+checked in `src/lending.rs`, where the doctest runs in the selection that has it.
+
+```rust,ignore
+use str_extensions::lending::{write_case, Case};
+
+let mut out = [0u8; 64];
+
+assert_eq!(write_case("someHTTPRequest_id", Case::Snake, &mut out).unwrap(), "some_http_request_id");
+assert_eq!(write_case("someHTTPRequest_id", Case::Title, &mut out).unwrap(), "Some Http Request Id");
+```
+
+A lend too small refuses rather than handing back a short answer, and says how much was
+wanted against how much was there, so doubling from `wanted` converges.
+
+Both sides drop a segment carrying no alphanumeric character, which is why
+`_PrependedUnderscore` becomes `prepended_underscore` rather than `_prepended_underscore`.
+The lending side writes each separator before it knows whether the word after it survives,
+and takes both back when it does not. `tests/lending_parity.rs` runs 39 inputs through both
+sides in all six cases and compares.
+
+## Examples
+
+```text
+cargo run --example case_conversions
+cargo run --example no_allocator_at_all --no-default-features --features no_alloc,full_format
+```
+
+The first is the six conversions over one input, then the same answer reached from five
+different spellings of it. The second is a code generator with no allocator anywhere:
+`word_bounds` for the segmentation, this crate's sink for the case, notko's lending
+contract for the storage, and every buffer a fixed array. Both are run by `cargo test`, in
+`tests/examples_run.rs`, which checks what they print rather than only that they built.
 
 ## The Problem
 

@@ -1,7 +1,8 @@
 //! Turning a string slice into the shapes a caller wants to hold it in.
 
-use std::borrow::Cow;
-use std::sync::Arc;
+use alloc::borrow::Cow;
+use alloc::string::{String, ToString};
+use alloc::sync::Arc;
 
 pub trait TypeCoercion {
     /// This slice as a [`Cow`], borrowed.

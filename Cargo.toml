@@ -11,11 +11,22 @@ categories = ["text-processing", "value-formatting", "development-tools", "gui",
 homepage = "https://github.com/orgrinrt/str_extensions"
 repository = "https://github.com/orgrinrt/str_extensions"
 
+# The lending example needs the feature the lending API is behind. Without this,
+# `cargo build --examples` on the default selection fails on a feature nobody asked for.
+[[example]]
+name = "no_allocator_at_all"
+required-features = ["no_alloc", "full_format"]
+
 [dev-dependencies]
 
 [dependencies]
-word_bounds = { git = "https://github.com/orgrinrt/word_bounds.git", version = "0.0.2" }
-once_cell = "1.8.0"
+# The branch, until the no_std work there is on main. The lending API and the public word
+# sink both come from it.
+word_bounds = { git = "https://github.com/orgrinrt/word_bounds.git", branch = "feat/no-std", default-features = false }
+# Only under `no_alloc`, where it supplies the lending contract `write_case` is written
+# against. notko is not on crates.io yet, so this is a git dependency, and a crate carrying
+# `no_alloc` cannot be published until it is.
+notko = { git = "ssh://git@github.com/orgrinrt/notko.git", branch = "dev", optional = true, default-features = false }
 
 [features]
 default = ["full_format", "full_building", "full_type_coercion", "use_regex"]
@@ -47,5 +58,13 @@ full_type_coercion = ["as_cow", "into_arc", "to_arc"]
 as_cow = []
 into_arc = []
 to_arc = []
+# allocation
+# `no_std` swaps std for alloc throughout, here and in word_bounds. Every method this
+# crate has returns something owned, so alloc is what it needs; std is what it happened
+# to be written against.
+no_std = ["word_bounds/no_std"]
+# `no_alloc` adds `write_case`, which writes the converted text into storage the caller
+# lends. It does not take the allocating conversions away.
+no_alloc = ["no_std", "dep:notko", "word_bounds/no_alloc"]
 # misc
 benchmark = ["word_bounds/benchmark", "optimize_for_cpu"]

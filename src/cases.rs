@@ -1,4 +1,6 @@
-use std::borrow::Cow;
+use alloc::borrow::Cow;
+use alloc::string::String;
+use alloc::vec::Vec;
 
 use word_bounds::impls::charwalk::Charwalk;
 use word_bounds::resolver::WordBoundResolver;
