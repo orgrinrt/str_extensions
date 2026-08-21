@@ -125,7 +125,7 @@ where
         word_start: 0,
         word_has_alphanumeric: false,
         held: None,
-        before_held: None,
+        last_cased: None,
     };
 
     if let Err(exhausted) = walk::<DefaultRules, _>(input, &mut sink) {
@@ -138,11 +138,19 @@ where
     // than merely incorrect, and the check is a scan of memory written a moment ago.
     match core::str::from_utf8(&sink.slots[.. used]) {
         Ok(text) => Outcome::Ok(text),
-        // Unreachable unless the walk wrote a partial character, which it cannot: the sink
-        // is the only writer and it writes whole characters. Reported rather than panicked,
-        // because a library refusing is better than a library aborting a caller that has no
-        // allocator to spare.
-        Err(_) => Outcome::Err(Exhausted { wanted: used, had: used }),
+        // Unreachable. The sink is the only writer, every write copies `encode_utf8` output
+        // whole, and both rewind targets are on character boundaries by construction: a
+        // word start, or a word start less one separator's own width.
+        //
+        // Panicking rather than returning an `Exhausted`, which an earlier version did with
+        // `wanted` equal to `had`. Those two numbers exist so a caller can double from
+        // `wanted` and converge, and a shortfall of zero gives it nothing to double: it
+        // would have reported a refusal that says the lend was exactly the right size,
+        // which is neither true nor actionable. A refusal has to mean the thing it says.
+        Err(e) => unreachable!(
+            "the sink wrote a partial character at byte {}: {e}",
+            e.valid_up_to(),
+        ),
     }
 }
 
@@ -167,8 +175,13 @@ struct CaseSink<'a> {
     /// Held for the same reason word_bounds holds one: a capital sigma's lower case form
     /// depends on whether it ends the word, and that is not known when it arrives.
     held:                  Option<char>,
-    /// The one before it, which the final-sigma rule needs.
-    before_held:           Option<char>,
+    /// The most recent cased character in the word being built, held or written.
+    ///
+    /// The rule asks for a cased character before the sigma, and `str::to_lowercase` walks
+    /// backwards past `Case_Ignorable` characters looking for one. Tracking the last cased
+    /// character rather than the immediately preceding one performs that skip exactly, and
+    /// costs nothing: an ignorable character simply never updates this.
+    last_cased:            Option<char>,
 }
 
 impl CaseSink<'_> {
@@ -200,16 +213,30 @@ impl CaseSink<'_> {
 
         // The first character of a word is capitalised in the cases that ask for it. It is
         // the first when nothing has been written into this word yet.
+        //
+        // Lowercased first, then the leading character of that uppercased. The allocating
+        // path segments into lowercased words and capitalises the result, so uppercasing
+        // the raw character is a different operation wherever a character's
+        // lowercase-then-uppercase is not its direct uppercase. `İ` uppercases to itself
+        // and lowercases to `i` plus a combining dot, whose uppercase is `I` plus that dot;
+        // `ẞ` uppercases to itself and goes through `ß` to `SS`. Turkish and German, and
+        // both came out wrong.
         if self.used == self.word_start && self.case.capitalises(self.words) {
-            for upper in c.to_uppercase() {
-                self.write(upper)?;
+            let mut lowered = c.to_lowercase();
+            if let Some(first) = lowered.next() {
+                for upper in first.to_uppercase() {
+                    self.write(upper)?;
+                }
+            }
+            for rest in lowered {
+                self.write(rest)?;
             }
             return Ok(());
         }
 
         // Otherwise lowercased, with the one rule `char::to_lowercase` does not carry.
         if c == 'Σ' {
-            let final_position = is_final && self.before_held.is_some_and(is_cased);
+            let final_position = is_final && self.last_cased.is_some();
             return self.write(if final_position { FINAL_SIGMA } else { NON_FINAL_SIGMA });
         }
 
@@ -239,7 +266,11 @@ impl WordSink for CaseSink<'_> {
         }
 
         self.flush_held(false)?;
-        self.before_held = was_held;
+        // Only a cased character updates this, which is what performs the skip past
+        // `Case_Ignorable` characters that `str::to_lowercase` does.
+        if was_held.is_some_and(is_cased) {
+            self.last_cased = was_held;
+        }
         self.held = Some(c);
 
         if c.is_alphanumeric() {
@@ -275,7 +306,7 @@ impl WordSink for CaseSink<'_> {
         }
 
         self.word_has_alphanumeric = false;
-        self.before_held = None;
+        self.last_cased = None;
         Ok(())
     }
 }

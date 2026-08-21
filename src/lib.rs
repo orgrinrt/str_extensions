@@ -37,12 +37,9 @@ pub(crate) mod cases;
 #[doc(hidden)]
 pub(crate) mod type_coercion;
 
-/// Everything the enabled features provide.
+/// Case conversion into storage the caller lends.
 ///
-/// Each re-export carries the same condition as the module it names. Without that the
-/// prelude referred to modules that the feature flags had compiled out, so **any**
-/// selection short of all three failed with `could not find 'cases' in the crate root`,
-/// and the per-feature configurability the crate advertises could not be used at all.
+/// Behind `no_alloc`, which is what supplies the lending contract it is written against.
 #[cfg(feature = "no_alloc")]
 pub mod lending;
 
@@ -54,6 +51,12 @@ pub use notko::lend::{Exhausted, Lend};
 #[cfg(feature = "no_alloc")]
 pub use notko::outcome::Outcome;
 
+/// Everything the enabled features provide.
+///
+/// Each re-export carries the same condition as the module it names. Without that the
+/// prelude referred to modules that the feature flags had compiled out, so **any**
+/// selection short of all three failed with `could not find 'cases' in the crate root`,
+/// and the per-feature configurability the crate advertises could not be used at all.
 pub mod prelude {
     #[cfg(feature = "no_alloc")]
     #[allow(unused_imports)]
@@ -97,9 +100,20 @@ pub mod resolver {
 
     pub mod impls {
         pub use word_bounds::impls::charwalk::Charwalk;
-        #[cfg(any(feature = "use_fancy_regex", feature = "benchmark"))]
+        // `not(no_std)` as well as the backend flag, because word_bounds compiles both
+        // regex backends out under `no_std`: the regex crates need std. Without this arm
+        // the default selection plus `no_std`, which is exactly what Cargo's feature
+        // unification produces when anything in the graph asks for it, fails to resolve
+        // a module that is not there.
+        #[cfg(all(
+            not(feature = "no_std"),
+            any(feature = "use_fancy_regex", feature = "benchmark")
+        ))]
         pub use word_bounds::impls::fancy_regex::FancyRegex;
-        #[cfg(any(feature = "use_regex", feature = "benchmark"))]
+        #[cfg(all(
+            not(feature = "no_std"),
+            any(feature = "use_regex", feature = "benchmark")
+        ))]
         pub use word_bounds::impls::regex::Regex;
         pub use word_bounds::WordBoundResolverImpl;
     }

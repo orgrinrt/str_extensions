@@ -281,3 +281,159 @@ fn the_lending_suite_actually_runs_under_no_alloc() {
          and executes nothing reports success just as loudly."
     );
 }
+
+/// Every case-conversion flag, with the method it must select.
+const CASE_FLAGS: &[(&str, &str)] = &[
+    ("to_snake_case", r#"    assert_eq!("aB".to_snake_case(), "a_b");"#),
+    ("to_camel_case", r#"    assert_eq!("a_b".to_camel_case(), "aB");"#),
+    ("to_pascal_case", r#"    assert_eq!("a_b".to_pascal_case(), "AB");"#),
+    ("to_kebab_case", r#"    assert_eq!("aB".to_kebab_case(), "a-b");"#),
+    ("to_human_readable", r#"    assert_eq!("aB".to_human_readable(), "a b");"#),
+    ("to_title_case", r#"    assert_eq!("a_b".to_title_case(), "A B");"#),
+];
+
+#[test]
+fn every_case_flag_reaches_its_method_on_its_own() {
+    for (flag, body) in CASE_FLAGS {
+        let (ok, err) = consumer_compiles(&format!("case_{flag}"), flag, body);
+        assert!(ok, "`{flag}` alone reaches its method:\n{err}");
+    }
+}
+
+#[test]
+fn a_case_method_whose_flag_is_off_is_not_there() {
+    // The direction that matters, and the one that was missing: `src/cases.rs` carried no
+    // `#[cfg]` at all, so all six methods arrived whenever any one flag was on. Every
+    // positive test passed, including the one above, because a flag that gates nothing
+    // gates nothing in the direction nobody looks.
+    //
+    // One case per pair rather than one for the group, because a group case passes against
+    // a gate naming any one of them, which is the shape that let this through twice.
+    for (selected, _) in CASE_FLAGS {
+        for (absent, _) in CASE_FLAGS {
+            if selected == absent {
+                continue;
+            }
+            let (ok, err) = consumer_compiles(
+                &format!("case_{absent}_absent_at_{selected}"),
+                selected,
+                &format!(r#"    let _ = "x".{absent}();"#),
+            );
+            assert!(!ok, "`{absent}` is absent when only `{selected}` is on");
+            assert!(err.contains(absent), "the error names `{absent}`:\n{err}");
+        }
+    }
+}
+
+#[test]
+fn no_std_composes_with_every_backend_flag() {
+    // word_bounds compiles both regex backends out under `no_std`, because the regex
+    // crates need std. This crate re-exports them and needed the same condition on the
+    // re-export, and did not have it: the default selection plus `no_std`, which is what
+    // Cargo's feature unification produces when anything in the graph asks for it, failed
+    // to resolve a module that was not there.
+    //
+    // word_bounds has this test. This crate did not, which is the whole reason the sibling
+    // survived: the class was found, fixed at one instance, and never grepped for.
+    for selection in [
+        "no_std,use_regex",
+        "no_std,use_fancy_regex",
+        "no_std,use_regex,use_fancy_regex",
+        "no_alloc,use_regex",
+        "no_std,full_format,use_regex",
+    ] {
+        let (ok, err) = check(selection);
+        assert!(ok, "{selection} builds:\n{err}");
+    }
+}
+
+#[test]
+fn no_std_composes_with_the_default_selection() {
+    // The exact shape of the break, spelled out: `--features no_std` on top of the
+    // defaults, which include `use_regex`. Not `--no-default-features`, which is what every
+    // other case here uses and is what hid it.
+    let output = Command::new(env!("CARGO"))
+        .args(["check", "--quiet", "--features", "no_std"])
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .env(
+            "CARGO_TARGET_DIR",
+            concat!(env!("CARGO_MANIFEST_DIR"), "/target/feature-matrix"),
+        )
+        .output()
+        .expect("cargo runs");
+
+    assert!(
+        output.status.success(),
+        "the default selection plus `no_std` builds:\n{}",
+        String::from_utf8_lossy(&output.stderr),
+    );
+}
+
+/// Runs the doc suite under one feature selection.
+///
+/// `check()` above runs `cargo check`, which does not compile doctests at all, so nothing
+/// in this matrix reached them until this. The README is included as the crate's own docs,
+/// so a code block in it is a doctest, and a block using a method that a narrowed selection
+/// compiles out fails under that selection while every other test here passes.
+fn doc_suite(features: &str) -> (bool, String) {
+    let mut command = Command::new(env!("CARGO"));
+    command
+        .args(["test", "--doc", "--quiet", "--no-default-features"])
+        .current_dir(env!("CARGO_MANIFEST_DIR"))
+        .env(
+            "CARGO_TARGET_DIR",
+            concat!(env!("CARGO_MANIFEST_DIR"), "/target/feature-matrix"),
+        );
+    if !features.is_empty() {
+        command.args(["--features", features]);
+    }
+    let output = command.output().expect("cargo runs");
+    (
+        output.status.success(),
+        format!(
+            "{}{}",
+            String::from_utf8_lossy(&output.stdout),
+            String::from_utf8_lossy(&output.stderr)
+        ),
+    )
+}
+
+#[test]
+fn the_doc_suite_passes_under_every_selection_the_docs_name() {
+    // Every selection this crate's own README or PR text tells a reader to run. A doctest
+    // that fails under a documented command is a documented command that does not work.
+    //
+    // All of them carry `full_format`, and that is the predicate rather than an accident:
+    // a doctest compiles under whichever selection `cargo test --doc` ran with and cannot
+    // say which features it needs, so the live blocks in the README are the ones every
+    // documented selection can compile. The building group is not, and its block is
+    // `ignore` with `tests/building.rs` carrying those assertions instead.
+    for selection in [
+        "full_format,full_building,full_type_coercion",
+        "no_alloc,full_format,full_building,full_type_coercion",
+        "no_alloc,full_format",
+        "no_std,full_format",
+        "full_format",
+    ] {
+        let (ok, report) = doc_suite(selection);
+        assert!(ok, "the doc suite passes at {selection}:\n{report}");
+    }
+}
+
+#[test]
+fn the_doc_suite_actually_runs_something() {
+    // The control. Every assertion above would pass just as well against a crate whose
+    // doctests had all been marked `ignore`, which is the cheapest way to make this green
+    // and the least honest.
+    let (ok, report) = doc_suite("no_alloc,full_format,full_building,full_type_coercion");
+    assert!(ok, "the doc suite passes:\n{report}");
+
+    let ran: usize = report
+        .lines()
+        .find_map(|line| line.strip_prefix("test result: ok. "))
+        .and_then(|rest| rest.split(' ').next())
+        .and_then(|count| count.parse().ok())
+        .expect("the doc suite reported a result line");
+
+    assert!(ran >= 3, "the doc suite ran {ran} doctests, where it has at least 3");
+}

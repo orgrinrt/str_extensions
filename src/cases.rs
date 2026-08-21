@@ -6,6 +6,14 @@ use word_bounds::impls::charwalk::Charwalk;
 use word_bounds::resolver::WordBoundResolver;
 use word_bounds::rules::DefaultRules;
 
+#[cfg(any(
+    feature = "to_snake_case",
+    feature = "to_camel_case",
+    feature = "to_pascal_case",
+    feature = "to_kebab_case",
+    feature = "to_human_readable",
+    feature = "to_title_case"
+))]
 /// Segments the input into words and drops the segments that carry no alphanumeric character.
 ///
 /// Case conversion normalises an identifier, so a leading underscore in `_PrependedUnderscore` is
@@ -18,6 +26,11 @@ fn words_of(input: &str) -> Vec<String> {
         .collect()
 }
 
+#[cfg(any(
+    feature = "to_camel_case",
+    feature = "to_pascal_case",
+    feature = "to_title_case"
+))]
 /// Uppercases the first character and leaves the rest as the segmentation produced it.
 fn capitalised(word: &str) -> String {
     let mut chars = word.chars();
@@ -27,30 +40,43 @@ fn capitalised(word: &str) -> String {
     }
 }
 
+#[cfg(any(
+    feature = "to_snake_case",
+    feature = "to_kebab_case",
+    feature = "to_human_readable"
+))]
 fn joined_with(input: &str, separator: &str) -> String {
     words_of(input).join(separator)
 }
 
 pub trait CaseConversions<'a, TOut: AsRef<str>>: AsRef<str> {
     /// `this_is_an_example`
+    #[cfg(feature = "to_snake_case")]
     fn to_snake_case(&self) -> TOut;
     /// `thisIsAnExample`
+    #[cfg(feature = "to_camel_case")]
     fn to_camel_case(&self) -> TOut;
     /// `ThisIsAnExample`
+    #[cfg(feature = "to_pascal_case")]
     fn to_pascal_case(&self) -> TOut;
     /// `this-is-an-example`
+    #[cfg(feature = "to_kebab_case")]
     fn to_kebab_case(&self) -> TOut;
     /// `this is an example`
+    #[cfg(feature = "to_human_readable")]
     fn to_human_readable(&self) -> TOut;
     /// `This Is An Example`
+    #[cfg(feature = "to_title_case")]
     fn to_title_case(&self) -> TOut;
 }
 
 impl<'a, TIn: AsRef<str>> CaseConversions<'a, Cow<'a, str>> for TIn {
+    #[cfg(feature = "to_snake_case")]
     fn to_snake_case(&self) -> Cow<'a, str> {
         Cow::Owned(joined_with(self.as_ref(), "_"))
     }
 
+    #[cfg(feature = "to_camel_case")]
     fn to_camel_case(&self) -> Cow<'a, str> {
         let words = words_of(self.as_ref());
         let mut out = String::new();
@@ -65,6 +91,7 @@ impl<'a, TIn: AsRef<str>> CaseConversions<'a, Cow<'a, str>> for TIn {
         Cow::Owned(out)
     }
 
+    #[cfg(feature = "to_pascal_case")]
     fn to_pascal_case(&self) -> Cow<'a, str> {
         let out: String = words_of(self.as_ref())
             .iter()
@@ -73,14 +100,17 @@ impl<'a, TIn: AsRef<str>> CaseConversions<'a, Cow<'a, str>> for TIn {
         Cow::Owned(out)
     }
 
+    #[cfg(feature = "to_kebab_case")]
     fn to_kebab_case(&self) -> Cow<'a, str> {
         Cow::Owned(joined_with(self.as_ref(), "-"))
     }
 
+    #[cfg(feature = "to_human_readable")]
     fn to_human_readable(&self) -> Cow<'a, str> {
         Cow::Owned(joined_with(self.as_ref(), " "))
     }
 
+    #[cfg(feature = "to_title_case")]
     fn to_title_case(&self) -> Cow<'a, str> {
         let out: Vec<String> = words_of(self.as_ref())
             .iter()

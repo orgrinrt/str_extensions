@@ -95,6 +95,22 @@ const INPUTS: &[&str] = &[
     "ΟΔΟΣ_ΣΤΟ",
     "ΑΣ ΣΑΣ",
     "日本語テキスト",
+    // Characters whose lowercase-then-uppercase is not their direct uppercase. The
+    // allocating path segments into lowercased words and capitalises the result, so a
+    // lending sink that uppercases the raw character is doing a different operation, and on
+    // these two it gives a different answer. Turkish and German, not corner cases.
+    "İstanbul_x",
+    "İ",
+    "ẞeta_x",
+    "ẞ",
+    "Ǆitem_x",
+    // Where the final-sigma rule needs the backward walk to skip an ignorable character
+    // before it finds a cased one, and where the cased one is titlecase.
+    "Α\u{301}Σ",
+    "Α\u{ad}Σ",
+    "ǅΣ",
+    "ǄΣ",
+    "1Σ",
 ];
 
 #[test]
@@ -110,6 +126,44 @@ fn both_sides_agree_on_every_case_and_every_input() {
             );
         }
     }
+}
+
+#[test]
+fn a_capital_is_taken_from_the_lowercased_character_not_the_raw_one() {
+    // The allocating path lowercases a word and then capitalises the result, so a lending
+    // sink has to do the same rather than uppercase what arrived. The two differ wherever a
+    // character's lowercase-then-uppercase is not its direct uppercase.
+    //
+    // `İ` uppercases to itself and lowercases to `i` plus a combining dot, whose uppercase
+    // is `I` plus that dot. `ẞ` uppercases to itself and goes through `ß` to `SS`.
+    assert_eq!(via_alloc("İstanbul_x", Case::Pascal), "I\u{307}stanbulX");
+    assert_ne!(via_alloc("İstanbul_x", Case::Pascal), "İstanbulX");
+    assert_eq!(via_lending("İstanbul_x", Case::Pascal), "I\u{307}stanbulX");
+
+    assert_eq!(via_alloc("ẞeta_x", Case::Pascal), "SSetaX");
+    assert_eq!(via_lending("ẞeta_x", Case::Pascal), "SSetaX");
+
+    // And the control: a character whose round trip is itself, so the two operations agree
+    // and the assertions above would pass against either implementation without it.
+    assert_eq!(via_lending("abc_x", Case::Pascal), "AbcX");
+    assert_eq!(via_alloc("abc_x", Case::Pascal), "AbcX");
+}
+
+#[test]
+fn the_final_sigma_rule_travels_from_word_bounds_intact() {
+    // The sink here reproduces the same rule the segmentation crate's does, so the same
+    // three shapes have to come out right: an ignorable character between the letter and
+    // the sigma, a titlecase letter before it, and something genuinely uncased before it.
+    for input in ["Α\u{301}Σ", "Α\u{ad}Σ", "ǅΣ", "1Σ"] {
+        for &case in ALL_CASES {
+            assert_eq!(via_lending(input, case), via_alloc(input, case), "{input:?} {case:?}");
+        }
+    }
+
+    // And the values, so this cannot pass by both sides being wrong in the same way.
+    assert_eq!(via_lending("Α\u{301}Σ", Case::Snake), "α\u{301}ς");
+    assert_eq!(via_lending("ǅΣ", Case::Snake), "ǆς");
+    assert_eq!(via_lending("1Σ", Case::Snake), via_alloc("1Σ", Case::Snake));
 }
 
 #[test]

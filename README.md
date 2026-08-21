@@ -131,13 +131,26 @@ assert_eq!(label, "User Profile Settings");
 
 let prose: Cow<str> = "UserProfileSettings".to_human_readable();
 assert_eq!(prose, "user profile settings");
+```
 
-// building, implemented on `str`
+The building methods, which are the `full_building` group:
+
+```rust,ignore
+use str_extensions::prelude::*;
+
 assert_eq!("app".append(".toml"), "app.toml");
 assert_eq!(".toml".prepend("app"), "app.toml");
 assert_eq!("app".concat(&[".", "toml"]), "app.toml");
 assert_eq!("a".join(&["b", "c"], ", "), "a, b, c");
 ```
+
+That one is `ignore` and the one above it is not, which is a difference worth explaining. A
+doctest compiles under whichever selection `cargo test --doc` ran with, and has no way to
+say which features it needs. Every selection this README names includes `full_format`, so
+the conversions above are checked; not all of them include `full_building`, so a live block
+using these four would fail under a command this page itself tells you to run. They are
+checked in `tests/building.rs` instead, and `tests/feature_matrix.rs` runs the doc suite
+under every selection named here so this stays true.
 
 Every assertion above was run against the crate rather than written from the method names.
 
