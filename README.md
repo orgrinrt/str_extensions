@@ -66,7 +66,8 @@ WIP: the conversions are implemented, the surface is not settled.
 | Function Name | Example | Details                                                                                                |
 |---------------|---------|----------------------------------------------------------------------------------------------------------|
 | `as_cow`      |         | Free; cost only applies when mutating the string, which turns it into `Cow::Owned` state              |
-| `into_arc`    |         | Allocates a `String` and wraps it into an `Arc`                                                        |
+| `into_arc`    |         | Allocates a `String` and wraps it into an `Arc`. Two allocations and two hops to read a byte           |
+| `to_arc`      |         | One allocation and one hop, as `Arc<str>`. Prefer it unless the contents have to be mutable later      |
 
 </details>
 
@@ -130,13 +131,26 @@ assert_eq!(label, "User Profile Settings");
 
 let prose: Cow<str> = "UserProfileSettings".to_human_readable();
 assert_eq!(prose, "user profile settings");
+```
 
-// building, implemented on `str`
+The building methods, which are the `full_building` group:
+
+```rust,ignore
+use str_extensions::prelude::*;
+
 assert_eq!("app".append(".toml"), "app.toml");
 assert_eq!(".toml".prepend("app"), "app.toml");
 assert_eq!("app".concat(&[".", "toml"]), "app.toml");
 assert_eq!("a".join(&["b", "c"], ", "), "a, b, c");
 ```
+
+That one is `ignore` and the one above it is not, which is a difference worth explaining. A
+doctest compiles under whichever selection `cargo test --doc` ran with, and has no way to
+say which features it needs. Every selection this README names includes `full_format`, so
+the conversions above are checked; not all of them include `full_building`, so a live block
+using these four would fail under a command this page itself tells you to run. They are
+checked in `tests/building.rs` instead, and `tests/feature_matrix.rs` runs the doc suite
+under every selection named here so this stays true.
 
 Every assertion above was run against the crate rather than written from the method names.
 
@@ -147,6 +161,74 @@ Each flag under `full_building` selects its own method, so a build asking for `a
 gets `append` alone. Both directions are checked: `tests/feature_matrix.rs` builds a
 throwaway consumer against each selection and asserts that a method whose flag is off is
 genuinely absent, with the positive case beside it as the control.
+
+## Allocation
+
+Three positions, each a feature, and each of them built by `tests/feature_matrix.rs`.
+
+| Feature | What is available |
+|---|---|
+| default | Everything, against `std`. |
+| `no_std` | The same methods, against `alloc`. Every one of them returns something owned, so `alloc` is what they need. |
+| `no_alloc` | Adds `write_case`, which writes the converted text into storage the caller lends and allocates nothing. |
+
+`no_alloc` implies `no_std` and does not take the allocating conversions away.
+
+`no_std` is exclusive with `use_regex` and `use_fancy_regex`, which forward to `word_bounds`,
+whose regex backends need std. The build refuses the combination rather than quietly
+substituting the character walker, which would give different words out of the same input with
+nothing to grep for.
+
+`use_regex` is in the default set, so `--features no_std` on its own still has it enabled and
+is refused. What a `no_std` consumer wants is:
+
+```bash
+cargo add str_extensions --no-default-features --features no_std,full_format
+```
+
+If the refusal appears and you did not ask for `no_std`, a sibling crate did: cargo unifies
+features across a dependency graph. `cargo tree -e features` names which one.
+
+The allocating conversions segment into a `Vec<String>` and build a second string out of it,
+so a snake-case conversion is one allocation per word plus one for the vector plus one for
+the answer. `write_case` writes the answer as the words arrive: it implements
+`word_bounds`' word sink, so the separators and the capitals go in at the moments the
+segmentation reaches them.
+
+The block below is `ignore`, because a doctest compiles under whatever selection
+`cargo test --doc` ran with and this one needs `no_alloc`. The same two assertions are
+checked in `src/lending.rs`, where the doctest runs in the selection that has it.
+
+```rust,ignore
+use str_extensions::lending::{write_case, Case};
+
+let mut out = [0u8; 64];
+
+assert_eq!(write_case("someHTTPRequest_id", Case::Snake, &mut out).unwrap(), "some_http_request_id");
+assert_eq!(write_case("someHTTPRequest_id", Case::Title, &mut out).unwrap(), "Some Http Request Id");
+```
+
+A lend too small refuses rather than handing back a short answer, and says how much was
+wanted against how much was there, so doubling from `wanted` converges.
+
+Both sides drop a segment carrying no alphanumeric character, which is why
+`_PrependedUnderscore` becomes `prepended_underscore` rather than `_prepended_underscore`.
+The lending side writes each separator before it knows whether the word after it survives,
+and takes both back when it does not. `tests/lending_parity.rs` runs 39 inputs through both
+sides in all six cases and compares.
+
+## Examples
+
+```text
+cargo run --example case_conversions
+cargo run --example no_allocator_at_all --no-default-features --features no_alloc,full_format
+```
+
+The first is the six conversions over one input, then the same answer reached from five
+different spellings of it. The second is a code generator with no allocator anywhere:
+`word_bounds` for the segmentation, this crate's sink for the case, notko's lending
+contract for the storage, and every buffer a fixed array. Both are run by `cargo test`, in
+`tests/examples_run.rs`, which checks what they print rather than only that they built.
 
 ## The Problem
 

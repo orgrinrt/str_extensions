@@ -15,6 +15,7 @@
 /// flag that selects nothing is a promise the manifest makes and the code does not keep,
 /// and the crate's own description calls itself "extensively configurable by feature
 /// flags".
+use alloc::string::String;
 pub trait StringBuilding {
     /// This string followed by `other`.
     #[cfg(feature = "append")]
