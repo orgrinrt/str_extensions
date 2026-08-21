@@ -6,7 +6,12 @@ compile_error!(
 Only select one of the two to enable at a time."
 );
 
-#[cfg(any(feature = "join", feature = "append", feature = "prepend"))]
+#[cfg(any(
+        feature = "append",
+        feature = "prepend",
+        feature = "concat",
+        feature = "join"
+    ))]
 #[doc(hidden)]
 pub(crate) mod building;
 
@@ -25,11 +30,34 @@ pub(crate) mod cases;
 #[doc(hidden)]
 pub(crate) mod type_coercion;
 
+/// Everything the enabled features provide.
+///
+/// Each re-export carries the same condition as the module it names. Without that the
+/// prelude referred to modules that the feature flags had compiled out, so **any**
+/// selection short of all three failed with `could not find 'cases' in the crate root`,
+/// and the per-feature configurability the crate advertises could not be used at all.
 pub mod prelude {
+    #[cfg(any(
+        feature = "append",
+        feature = "prepend",
+        feature = "concat",
+        feature = "join"
+    ))]
     #[allow(unused_imports)]
     pub use super::building::*;
+
+    #[cfg(any(
+        feature = "to_snake_case",
+        feature = "to_camel_case",
+        feature = "to_pascal_case",
+        feature = "to_kebab_case",
+        feature = "to_human_readable",
+        feature = "to_title_case"
+    ))]
     #[allow(unused_imports)]
     pub use super::cases::*;
+
+    #[cfg(any(feature = "as_cow", feature = "into_arc"))]
     #[allow(unused_imports)]
     pub use super::type_coercion::*;
 }

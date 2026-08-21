@@ -1,7 +1,7 @@
 [package]
 name = "str_extensions"
 authors = ["orgrinrt", "Hiisi Digital"]
-version = "0.0.1"
+version = "0.0.2"
 edition = "2021"
 description = "Useful extension methods for strings in Rust, configurable by feature flags to minimise its footprint."
 license = "MPL-2.0"
@@ -14,7 +14,7 @@ repository = "https://github.com/orgrinrt/str_extensions"
 [dev-dependencies]
 
 [dependencies]
-word_bounds = { git = "https://github.com/orgrinrt/word_bounds.git", version = "0.0.1" }
+word_bounds = { git = "https://github.com/orgrinrt/word_bounds.git", version = "0.0.2" }
 once_cell = "1.8.0"
 
 [features]
@@ -33,13 +33,19 @@ to_kebab_case = []
 to_human_readable = []
 to_title_case = []
 # building
-full_building = ["join", "append", "prepend"]
-join = []
+# `join` used to gate a method that did what `append` does. It gates the separator form
+# now, which is what the name means on a slice. `concat` had no flag of its own and now has
+# one, and each of the three genuinely selects its method rather than only deciding whether
+# the module exists.
+full_building = ["append", "prepend", "concat", "join"]
 append = []
 prepend = []
+concat = []
+join = []
 # type coercion
-full_type_coercion = ["as_cow", "into_arc"]
+full_type_coercion = ["as_cow", "into_arc", "to_arc"]
 as_cow = []
 into_arc = []
+to_arc = []
 # misc
 benchmark = ["word_bounds/benchmark", "optimize_for_cpu"]
