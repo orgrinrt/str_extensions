@@ -33,17 +33,19 @@ to_kebab_case = []
 to_human_readable = []
 to_title_case = []
 # building
-# `join` was here and gated a method that did what `append` does, under a name that means
-# something else on a slice. Both are gone. `concat` had no flag of its own and now has
+# `join` used to gate a method that did what `append` does. It gates the separator form
+# now, which is what the name means on a slice. `concat` had no flag of its own and now has
 # one, and each of the three genuinely selects its method rather than only deciding whether
 # the module exists.
-full_building = ["append", "prepend", "concat"]
+full_building = ["append", "prepend", "concat", "join"]
 append = []
 prepend = []
 concat = []
+join = []
 # type coercion
-full_type_coercion = ["as_cow", "into_arc"]
+full_type_coercion = ["as_cow", "into_arc", "to_arc"]
 as_cow = []
 into_arc = []
+to_arc = []
 # misc
 benchmark = ["word_bounds/benchmark", "optimize_for_cpu"]

@@ -6,7 +6,12 @@ compile_error!(
 Only select one of the two to enable at a time."
 );
 
-#[cfg(any(feature = "append", feature = "prepend", feature = "concat"))]
+#[cfg(any(
+        feature = "append",
+        feature = "prepend",
+        feature = "concat",
+        feature = "join"
+    ))]
 #[doc(hidden)]
 pub(crate) mod building;
 
@@ -32,7 +37,12 @@ pub(crate) mod type_coercion;
 /// selection short of all three failed with `could not find 'cases' in the crate root`,
 /// and the per-feature configurability the crate advertises could not be used at all.
 pub mod prelude {
-    #[cfg(any(feature = "append", feature = "prepend", feature = "concat"))]
+    #[cfg(any(
+        feature = "append",
+        feature = "prepend",
+        feature = "concat",
+        feature = "join"
+    ))]
     #[allow(unused_imports)]
     pub use super::building::*;
 

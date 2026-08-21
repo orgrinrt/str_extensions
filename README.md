@@ -4,7 +4,7 @@ str_extensions
 
 [![GitHub Stars](https://img.shields.io/github/stars/orgrinrt/str_extensions.svg)](https://github.com/orgrinrt/str_extensions/stargazers)
 [![GitHub Issues](https://img.shields.io/github/issues/orgrinrt/str_extensions.svg)](https://github.com/orgrinrt/str_extensions/issues)
-[![Current Version](https://img.shields.io/badge/version-0.0.1-red.svg)](https://github.com/orgrinrt/str_extensions)
+[![Current Version](https://img.shields.io/badge/version-0.0.2-red.svg)](https://github.com/orgrinrt/str_extensions)
 
 > Useful extension methods for strings in Rust, carefully benchmarked and extensively configurable by feature flags to
 > minimise its footprint.
@@ -92,12 +92,10 @@ regarding the cost.
 ## Performance
 
 Word segmentation is [`word_bounds`](https://github.com/orgrinrt/word_bounds), which this crate
-depends on. It used to be vendored here as a copy of the same four files, so a fix to the
-segmentation rules had to be made twice. The benchmarks for the three implementations live there
-with the code they measure.
+depends on. The benchmarks for its three implementations live there, with the code they measure.
 
 The feature flags that select an implementation are forwarded to that crate, so `use_regex` and
-`use_fancy_regex` still work here and mean the same thing. `WordBoundResolver` defaults to
+`use_fancy_regex` mean the same thing here as they do there. `WordBoundResolver` defaults to
 `Charwalk` regardless of which are compiled in, and `Charwalk` is the suggested one: it is the
 fastest, and the only implementation that handles punctuation runs and variation-selector emoji.
 
@@ -137,17 +135,18 @@ assert_eq!(prose, "user profile settings");
 assert_eq!("app".append(".toml"), "app.toml");
 assert_eq!(".toml".prepend("app"), "app.toml");
 assert_eq!("app".concat(&[".", "toml"]), "app.toml");
+assert_eq!("a".join(&["b", "c"], ", "), "a, b, c");
 ```
 
 Every assertion above was run against the crate rather than written from the method names.
 
-`StringBuilding` used to carry a `join` alongside `append`, doing the same thing under a name that
-already means something else: `[a, b].join(", ")` puts a separator between things, and this crate's own
-case conversions use it that way. `"a".join("b")` returning `"ab"` read as a bug at every call site
-where it was working as designed. It is gone; `append` says what it does.
+`concat` takes several pieces in one allocation. `join` puts a separator between each pair
+and never after the last, so `"alone".join(&[], ", ")` is `"alone"`.
 
-The three flags under `full_building` now each select their method. They used to decide only whether
-the module existed at all, so turning two off and one on gave you every method anyway.
+Each flag under `full_building` selects its own method, so a build asking for `append` alone
+gets `append` alone. Both directions are checked: `tests/feature_matrix.rs` builds a
+throwaway consumer against each selection and asserts that a method whose flag is off is
+genuinely absent, with the positive case beside it as the control.
 
 ## The Problem
 
