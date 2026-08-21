@@ -49,7 +49,10 @@ fn case_conversions_shows_all_six_and_the_segmentation_behind_them() {
         ("to_title_case", "Some Http Request Id"),
     ] {
         assert!(out.contains(label), "no {label} line in:\n{out}");
-        assert!(out.contains(answer), "{label} did not produce {answer:?} in:\n{out}");
+        assert!(
+            out.contains(answer),
+            "{label} did not produce {answer:?} in:\n{out}"
+        );
     }
 
     // The point the second half makes: five spellings reach one answer, so the answer has
@@ -61,8 +64,14 @@ fn case_conversions_shows_all_six_and_the_segmentation_behind_them() {
 
     // And the third: a separator with nothing alphanumeric in it is dropped rather than
     // doubled.
-    assert!(out.contains("prepended_underscore"), "the drop filter did not fire in:\n{out}");
-    assert!(!out.contains("_prepended_underscore"), "a doubled separator survived in:\n{out}");
+    assert!(
+        out.contains("prepended_underscore"),
+        "the drop filter did not fire in:\n{out}"
+    );
+    assert!(
+        !out.contains("_prepended_underscore"),
+        "a doubled separator survived in:\n{out}"
+    );
 }
 
 #[test]
@@ -89,5 +98,8 @@ fn the_no_allocator_example_converts_and_refuses() {
         out.contains("refused: wanted at least 9 bytes, had 8"),
         "no refusal in:\n{out}",
     );
-    assert!(out.contains("at 32 bytes: http status code"), "no retry in:\n{out}");
+    assert!(
+        out.contains("at 32 bytes: http status code"),
+        "no retry in:\n{out}"
+    );
 }

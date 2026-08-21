@@ -32,7 +32,10 @@ fn via_lending(input: &str, case: Case) -> String {
     let mut out = [0u8; 512];
     write_case(input, case, &mut out)
         .unwrap_or_else(|e| {
-            panic!("{input:?} at {case:?} did not fit: wanted {}, had {}", e.wanted, e.had)
+            panic!(
+                "{input:?} at {case:?} did not fit: wanted {}, had {}",
+                e.wanted, e.had
+            )
         })
         .to_string()
 }
@@ -156,7 +159,11 @@ fn the_final_sigma_rule_travels_from_word_bounds_intact() {
     // the sigma, a titlecase letter before it, and something genuinely uncased before it.
     for input in ["Α\u{301}Σ", "Α\u{ad}Σ", "ǅΣ", "1Σ"] {
         for &case in ALL_CASES {
-            assert_eq!(via_lending(input, case), via_alloc(input, case), "{input:?} {case:?}");
+            assert_eq!(
+                via_lending(input, case),
+                via_alloc(input, case),
+                "{input:?} {case:?}"
+            );
         }
     }
 
@@ -173,10 +180,19 @@ fn a_dropped_segment_takes_its_separator_with_it() {
     // other input has no segment to drop.
     //
     // These are what the doubled separator would have looked like.
-    assert_eq!(via_alloc("_PrependedUnderscore", Case::Snake), "prepended_underscore");
-    assert_ne!(via_alloc("_PrependedUnderscore", Case::Snake), "_prepended_underscore");
+    assert_eq!(
+        via_alloc("_PrependedUnderscore", Case::Snake),
+        "prepended_underscore"
+    );
+    assert_ne!(
+        via_alloc("_PrependedUnderscore", Case::Snake),
+        "_prepended_underscore"
+    );
 
-    assert_eq!(via_lending("_PrependedUnderscore", Case::Snake), "prepended_underscore");
+    assert_eq!(
+        via_lending("_PrependedUnderscore", Case::Snake),
+        "prepended_underscore"
+    );
     assert_eq!(via_lending("__both__", Case::Snake), "both");
     assert_eq!(via_lending("a__b", Case::Kebab), "a-b");
 }
@@ -197,7 +213,10 @@ fn a_lend_too_small_refuses_with_both_numbers() {
     let refused = write_case("someHTTPRequest", Case::Snake, &mut out).unwrap_err();
 
     assert_eq!(refused.had, 4, "it reports what it was given");
-    assert!(refused.wanted > refused.had, "and that it needed more than that");
+    assert!(
+        refused.wanted > refused.had,
+        "and that it needed more than that"
+    );
 
     // And it is a lower bound rather than a lie: the whole answer is longer still, since
     // the shortfall is found partway through.
@@ -213,7 +232,10 @@ fn a_lend_of_exactly_the_right_size_is_enough() {
     // fire on an answer that fits, which no positive test with a generous buffer can see.
     let expected = "some_http_request";
     let mut out = vec![0u8; expected.len()];
-    assert_eq!(write_case("someHTTPRequest", Case::Snake, out.as_mut_slice()).unwrap(), expected);
+    assert_eq!(
+        write_case("someHTTPRequest", Case::Snake, out.as_mut_slice()).unwrap(),
+        expected
+    );
 
     let mut one_short = vec![0u8; expected.len() - 1];
     assert!(write_case("someHTTPRequest", Case::Snake, one_short.as_mut_slice()).is_err());

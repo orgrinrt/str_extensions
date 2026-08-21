@@ -36,7 +36,9 @@ fn concat_agrees_with_repeated_appends() {
     // is what says the faster form still produces the same string.
     let pieces = ["one", "two", "three", "four"];
     let by_concat = "start".concat(&pieces);
-    let by_append = pieces.iter().fold(String::from("start"), |acc, p| acc.append(p));
+    let by_append = pieces
+        .iter()
+        .fold(String::from("start"), |acc, p| acc.append(p));
     assert_eq!(by_concat, by_append);
 }
 
@@ -63,7 +65,10 @@ fn multibyte_characters_survive() {
 fn as_cow_borrows_rather_than_copying() {
     let owned = String::from("borrowed, not copied");
     let cow = owned.as_str().as_cow();
-    assert!(matches!(cow, Cow::Borrowed(_)), "as_cow borrows; got {cow:?}");
+    assert!(
+        matches!(cow, Cow::Borrowed(_)),
+        "as_cow borrows; got {cow:?}"
+    );
     assert_eq!(cow, "borrowed, not copied");
 }
 
@@ -73,7 +78,11 @@ fn into_arc_gives_a_shareable_copy() {
     assert_eq!(*arc, "shared");
 
     let second = arc.clone();
-    assert_eq!(std::sync::Arc::strong_count(&arc), 2, "cloning shares rather than copies");
+    assert_eq!(
+        std::sync::Arc::strong_count(&arc),
+        2,
+        "cloning shares rather than copies"
+    );
     assert_eq!(*second, "shared");
 }
 
@@ -82,7 +91,9 @@ fn an_arc_of_a_string_crosses_a_thread() {
     // Which is the reason to want one.
     let arc = "carried across".into_arc();
     let moved = arc.clone();
-    let seen = std::thread::spawn(move || moved.to_string()).join().expect("no panic");
+    let seen = std::thread::spawn(move || moved.to_string())
+        .join()
+        .expect("no panic");
     assert_eq!(seen, "carried across");
 }
 

@@ -1,6 +1,15 @@
 #![doc = include_str!(concat!(env!("CARGO_MANIFEST_DIR"), "/", "README.md"))]
 #![cfg_attr(feature = "no_std", no_std)]
 
+// A refusal for `no_std` with a regex backend lived here and could never fire: cargo builds
+// dependencies first, so word_bounds refuses while this crate has not been compiled at all.
+// Its message is what a consumer sees, and it names `cargo tree -e features`, which is how
+// they find out the backend came from this crate's defaults rather than from them.
+//
+// What is worth saying here is in the README, under the feature table: `--features no_std`
+// leaves `use_regex` on, because it is a default, so a `no_std` consumer wants
+// `--no-default-features --features no_std,<the rest>`.
+
 // `alloc` rather than `std`, in both configurations. It is a sysroot crate, so naming it
 // here costs a std build nothing and is what lets one set of paths serve both. Every
 // method this crate has returns something owned, so `alloc` is what it needs and `std` is
@@ -13,12 +22,7 @@ compile_error!(
 Only select one of the two to enable at a time."
 );
 
-#[cfg(any(
-        feature = "append",
-        feature = "prepend",
-        feature = "concat",
-        feature = "join"
-    ))]
+#[cfg(any(feature = "append", feature = "prepend", feature = "concat", feature = "join"))]
 #[doc(hidden)]
 pub(crate) mod building;
 
@@ -62,12 +66,7 @@ pub mod prelude {
     #[allow(unused_imports)]
     pub use super::lending::*;
 
-    #[cfg(any(
-        feature = "append",
-        feature = "prepend",
-        feature = "concat",
-        feature = "join"
-    ))]
+    #[cfg(any(feature = "append", feature = "prepend", feature = "concat", feature = "join"))]
     #[allow(unused_imports)]
     pub use super::building::*;
 

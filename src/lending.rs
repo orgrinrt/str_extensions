@@ -136,7 +136,7 @@ where
     // Every byte came from `char::encode_utf8`, written whole, so this is valid UTF-8 by
     // construction. Checked anyway, because being wrong about that would be unsound rather
     // than merely incorrect, and the check is a scan of memory written a moment ago.
-    match core::str::from_utf8(&sink.slots[.. used]) {
+    match core::str::from_utf8(&sink.slots[..used]) {
         Ok(text) => Outcome::Ok(text),
         // Unreachable. The sink is the only writer, every write copies `encode_utf8` output
         // whole, and both rewind targets are on character boundaries by construction: a
@@ -156,13 +156,13 @@ where
 
 /// A sink that writes the converted text as the walk produces words.
 struct CaseSink<'a> {
-    slots:                 &'a mut [u8],
-    used:                  usize,
-    case:                  Case,
+    slots: &'a mut [u8],
+    used: usize,
+    case: Case,
     /// How many words have been committed, which decides the separator and the capital.
-    words:                 usize,
+    words: usize,
     /// Where in `slots` the word being built starts, so it can be dropped whole.
-    word_start:            usize,
+    word_start: usize,
     /// Whether anything in the word being built is alphanumeric.
     ///
     /// The allocating conversions drop a segment carrying no alphanumeric character,
@@ -174,14 +174,14 @@ struct CaseSink<'a> {
     ///
     /// Held for the same reason word_bounds holds one: a capital sigma's lower case form
     /// depends on whether it ends the word, and that is not known when it arrives.
-    held:                  Option<char>,
+    held: Option<char>,
     /// The most recent cased character in the word being built, held or written.
     ///
     /// The rule asks for a cased character before the sigma, and `str::to_lowercase` walks
     /// backwards past `Case_Ignorable` characters looking for one. Tracking the last cased
     /// character rather than the immediately preceding one performs that skip exactly, and
     /// costs nothing: an ignorable character simply never updates this.
-    last_cased:            Option<char>,
+    last_cased: Option<char>,
 }
 
 impl CaseSink<'_> {
@@ -196,11 +196,11 @@ impl CaseSink<'_> {
                 // A lower bound: what this write needed is known, and what the rest of the
                 // input still needs is not.
                 wanted: self.used + bytes.len(),
-                had:    self.slots.len(),
+                had: self.slots.len(),
             });
         }
 
-        self.slots[self.used .. self.used + bytes.len()].copy_from_slice(bytes);
+        self.slots[self.used..self.used + bytes.len()].copy_from_slice(bytes);
         self.used += bytes.len();
         Ok(())
     }

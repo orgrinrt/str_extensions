@@ -100,12 +100,12 @@ fn the_prelude_survives_a_partial_selection() {
     // `could not find 'cases' in the crate root`, so the configurability the crate
     // advertises could not be used at all.
     for selection in ["append", "to_snake_case", "as_cow"] {
-        let (ok, err) = consumer_compiles(
-            &format!("prelude_{selection}"),
-            selection,
-            "    let _ = 1;",
+        let (ok, err) =
+            consumer_compiles(&format!("prelude_{selection}"), selection, "    let _ = 1;");
+        assert!(
+            ok,
+            "a consumer can import the prelude at {selection}:\n{err}"
         );
-        assert!(ok, "a consumer can import the prelude at {selection}:\n{err}");
     }
 }
 
@@ -223,8 +223,14 @@ fn the_lending_conversion_is_absent_without_no_alloc() {
         r#"    let mut out = [0u8; 8];
     let _ = str_extensions::lending::write_case("a", str_extensions::lending::Case::Snake, &mut out);"#,
     );
-    assert!(!ok, "`write_case` is absent when `no_alloc` is off, so this must not compile");
-    assert!(err.contains("lending"), "the error names the module that is not there:\n{err}");
+    assert!(
+        !ok,
+        "`write_case` is absent when `no_alloc` is off, so this must not compile"
+    );
+    assert!(
+        err.contains("lending"),
+        "the error names the module that is not there:\n{err}"
+    );
 }
 
 #[test]
@@ -266,7 +272,10 @@ fn the_lending_suite_actually_runs_under_no_alloc() {
         .expect("cargo runs");
 
     let report = String::from_utf8_lossy(&output.stdout);
-    assert!(output.status.success(), "the lending suite passes:\n{report}");
+    assert!(
+        output.status.success(),
+        "the lending suite passes:\n{report}"
+    );
 
     let ran: usize = report
         .lines()
@@ -284,12 +293,30 @@ fn the_lending_suite_actually_runs_under_no_alloc() {
 
 /// Every case-conversion flag, with the method it must select.
 const CASE_FLAGS: &[(&str, &str)] = &[
-    ("to_snake_case", r#"    assert_eq!("aB".to_snake_case(), "a_b");"#),
-    ("to_camel_case", r#"    assert_eq!("a_b".to_camel_case(), "aB");"#),
-    ("to_pascal_case", r#"    assert_eq!("a_b".to_pascal_case(), "AB");"#),
-    ("to_kebab_case", r#"    assert_eq!("aB".to_kebab_case(), "a-b");"#),
-    ("to_human_readable", r#"    assert_eq!("aB".to_human_readable(), "a b");"#),
-    ("to_title_case", r#"    assert_eq!("a_b".to_title_case(), "A B");"#),
+    (
+        "to_snake_case",
+        r#"    assert_eq!("aB".to_snake_case(), "a_b");"#,
+    ),
+    (
+        "to_camel_case",
+        r#"    assert_eq!("a_b".to_camel_case(), "aB");"#,
+    ),
+    (
+        "to_pascal_case",
+        r#"    assert_eq!("a_b".to_pascal_case(), "AB");"#,
+    ),
+    (
+        "to_kebab_case",
+        r#"    assert_eq!("aB".to_kebab_case(), "a-b");"#,
+    ),
+    (
+        "to_human_readable",
+        r#"    assert_eq!("aB".to_human_readable(), "a b");"#,
+    ),
+    (
+        "to_title_case",
+        r#"    assert_eq!("a_b".to_title_case(), "A B");"#,
+    ),
 ];
 
 #[test]
@@ -326,15 +353,16 @@ fn a_case_method_whose_flag_is_off_is_not_there() {
 }
 
 #[test]
-fn no_std_composes_with_every_backend_flag() {
-    // word_bounds compiles both regex backends out under `no_std`, because the regex
-    // crates need std. This crate re-exports them and needed the same condition on the
-    // re-export, and did not have it: the default selection plus `no_std`, which is what
-    // Cargo's feature unification produces when anything in the graph asks for it, failed
-    // to resolve a module that was not there.
+fn no_std_is_refused_with_a_regex_backend_rather_than_silently_walking() {
+    // This asserted the opposite, and the comment it carried explained why: word_bounds
+    // compiled the regex backends out under `no_std`, so the combination built and used the
+    // character walker. That reads as composition and is a substitution. Different words come
+    // out of the same input, with no error and nothing to grep for, and cargo unifies features
+    // across a dependency graph, so the crate that asked for `no_std` is often not the crate
+    // reading the result.
     //
-    // word_bounds has this test. This crate did not, which is the whole reason the sibling
-    // survived: the class was found, fixed at one instance, and never grepped for.
+    // Refused now, at both levels: word_bounds refuses its own pair, and this crate refuses
+    // its own, because the message a reader can act on names the features they wrote.
     for selection in [
         "no_std,use_regex",
         "no_std,use_fancy_regex",
@@ -343,15 +371,40 @@ fn no_std_composes_with_every_backend_flag() {
         "no_std,full_format,use_regex",
     ] {
         let (ok, err) = check(selection);
+        assert!(!ok, "{selection} must not build:\n{err}");
+        // word_bounds' message rather than one of this crate's. A refusal here could never
+        // fire: cargo builds dependencies first, so word_bounds refuses while this crate has
+        // not been compiled. Its message names `cargo tree -e features`, which is how a
+        // consumer finds out the backend came from this crate's defaults.
+        assert!(
+            err.contains("exclusive") && err.contains("cargo tree -e features"),
+            "the refusal names the conflict and how to trace it:\n{err}",
+        );
+    }
+}
+
+#[test]
+fn no_std_composes_with_everything_that_is_not_a_regex_backend() {
+    // The control. Without it the test above passes on a crate where `no_std` refuses
+    // everything, which is a different defect behind the same green.
+    for selection in [
+        "no_std",
+        "no_std,full_format",
+        "no_std,full_building",
+        "no_std,full_type_coercion",
+        "no_alloc,full_format",
+    ] {
+        let (ok, err) = check(selection);
         assert!(ok, "{selection} builds:\n{err}");
     }
 }
 
 #[test]
-fn no_std_composes_with_the_default_selection() {
-    // The exact shape of the break, spelled out: `--features no_std` on top of the
-    // defaults, which include `use_regex`. Not `--no-default-features`, which is what every
-    // other case here uses and is what hid it.
+fn the_default_selection_plus_no_std_is_refused_and_says_what_to_do() {
+    // The shape that surprises, spelled out: `--features no_std` on top of the defaults,
+    // which include `use_regex`. Not `--no-default-features`, which is what every other case
+    // here uses and is what hid the original defect. A consumer reaching for `no_std` this way
+    // has not asked for a regex backend and has one, so the message has to say so.
     let output = Command::new(env!("CARGO"))
         .args(["check", "--quiet", "--features", "no_std"])
         .current_dir(env!("CARGO_MANIFEST_DIR"))
@@ -362,10 +415,18 @@ fn no_std_composes_with_the_default_selection() {
         .output()
         .expect("cargo runs");
 
+    let err = String::from_utf8_lossy(&output.stderr);
     assert!(
-        output.status.success(),
-        "the default selection plus `no_std` builds:\n{}",
-        String::from_utf8_lossy(&output.stderr),
+        !output.status.success(),
+        "the default selection plus `no_std` must not build"
+    );
+    assert!(
+        err.contains("exclusive"),
+        "the refusal names the conflict:\n{err}",
+    );
+    assert!(
+        err.contains("cargo tree -e features"),
+        "and how to trace which crate enabled what:\n{err}",
     );
 }
 
@@ -435,5 +496,8 @@ fn the_doc_suite_actually_runs_something() {
         .and_then(|count| count.parse().ok())
         .expect("the doc suite reported a result line");
 
-    assert!(ran >= 3, "the doc suite ran {ran} doctests, where it has at least 3");
+    assert!(
+        ran >= 3,
+        "the doc suite ran {ran} doctests, where it has at least 3"
+    );
 }

@@ -26,11 +26,7 @@ fn words_of(input: &str) -> Vec<String> {
         .collect()
 }
 
-#[cfg(any(
-    feature = "to_camel_case",
-    feature = "to_pascal_case",
-    feature = "to_title_case"
-))]
+#[cfg(any(feature = "to_camel_case", feature = "to_pascal_case", feature = "to_title_case"))]
 /// Uppercases the first character and leaves the rest as the segmentation produced it.
 fn capitalised(word: &str) -> String {
     let mut chars = word.chars();

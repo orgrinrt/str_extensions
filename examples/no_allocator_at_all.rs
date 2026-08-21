@@ -31,7 +31,10 @@ fn main() {
     // the next call gets it back.
     let mut scratch = [0u8; 64];
 
-    println!("{:<18} {:<20} {:<20} {}", "schema", "field", "getter", "constant");
+    println!(
+        "{:<18} {:<20} {:<20} {}",
+        "schema", "field", "getter", "constant"
+    );
     for &field in FIELDS {
         // Each conversion borrows the buffer, is printed, and gives it back. Holding two
         // at once would need two buffers, which is the honest cost of not allocating and is
@@ -48,7 +51,10 @@ fn main() {
     let mut cramped = [0u8; 8];
     match write_case("HTTPStatusCode", Case::HumanReadable, &mut cramped) {
         Outcome::Ok(text) => println!("unexpectedly fitted: {text}"),
-        Outcome::Err(Exhausted { wanted, had }) => {
+        Outcome::Err(Exhausted {
+            wanted,
+            had,
+        }) => {
             println!("refused: wanted at least {wanted} bytes, had {had}");
 
             // Doubling from `wanted` converges, which is why both numbers are carried
@@ -83,21 +89,24 @@ fn shouty(scratch: &mut [u8; 64], input: &str) -> Shown {
 
     // Uppercasing ASCII in place, since the answer is already in a buffer that is ours.
     let mut shown = Shown::of(text);
-    shown.bytes[.. shown.len].make_ascii_uppercase();
+    shown.bytes[..shown.len].make_ascii_uppercase();
     shown
 }
 
 /// A short answer copied out of the scratch buffer, so the buffer is free again.
 struct Shown {
     bytes: [u8; 64],
-    len:   usize,
+    len: usize,
 }
 
 impl Shown {
     fn of(text: &str) -> Self {
         let mut bytes = [0u8; 64];
-        bytes[.. text.len()].copy_from_slice(text.as_bytes());
-        Self { bytes, len: text.len() }
+        bytes[..text.len()].copy_from_slice(text.as_bytes());
+        Self {
+            bytes,
+            len: text.len(),
+        }
     }
 }
 
@@ -109,6 +118,6 @@ impl core::fmt::Display for Shown {
         //
         // `pad` rather than `write_str`, which ignores the width in the format string and
         // makes every `{:<20}` here do nothing.
-        f.pad(core::str::from_utf8(&self.bytes[.. self.len]).unwrap_or("<invalid>"))
+        f.pad(core::str::from_utf8(&self.bytes[..self.len]).unwrap_or("<invalid>"))
     }
 }

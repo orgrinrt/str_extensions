@@ -174,6 +174,21 @@ Three positions, each a feature, and each of them built by `tests/feature_matrix
 
 `no_alloc` implies `no_std` and does not take the allocating conversions away.
 
+`no_std` is exclusive with `use_regex` and `use_fancy_regex`, which forward to `word_bounds`,
+whose regex backends need std. The build refuses the combination rather than quietly
+substituting the character walker, which would give different words out of the same input with
+nothing to grep for.
+
+`use_regex` is in the default set, so `--features no_std` on its own still has it enabled and
+is refused. What a `no_std` consumer wants is:
+
+```bash
+cargo add str_extensions --no-default-features --features no_std,full_format
+```
+
+If the refusal appears and you did not ask for `no_std`, a sibling crate did: cargo unifies
+features across a dependency graph. `cargo tree -e features` names which one.
+
 The allocating conversions segment into a `Vec<String>` and build a second string out of it,
 so a snake-case conversion is one allocation per word plus one for the vector plus one for
 the answer. `write_case` writes the answer as the words arrive: it implements
