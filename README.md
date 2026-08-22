@@ -1,15 +1,32 @@
-str_extensions
-============
-<div style="text-align: center;">
+# `str_extensions`
+
+<div align="center" style="text-align: center;">
 
 [![GitHub Stars](https://img.shields.io/github/stars/orgrinrt/str_extensions.svg)](https://github.com/orgrinrt/str_extensions/stargazers)
+[![Crates.io](https://img.shields.io/crates/v/str_extensions)](https://crates.io/crates/str_extensions)
+[![docs.rs](https://img.shields.io/docsrs/str_extensions)](https://docs.rs/str_extensions)
 [![GitHub Issues](https://img.shields.io/github/issues/orgrinrt/str_extensions.svg)](https://github.com/orgrinrt/str_extensions/issues)
-[![Current Version](https://img.shields.io/badge/version-0.0.2-red.svg)](https://github.com/orgrinrt/str_extensions)
+![License](https://img.shields.io/github/license/orgrinrt/str_extensions?color=%23009689)
 
-> Useful extension methods for strings in Rust, carefully benchmarked and extensively configurable by feature flags to
-> minimise its footprint.
+> String extension methods, each behind a feature flag so you only carry what you use.
 
 </div>
+
+## Installation
+
+Not published yet, so this does not resolve. It is the command once a release
+lands.
+
+```bash
+cargo add str_extensions
+```
+
+Or in `Cargo.toml`:
+
+```toml
+[dependencies]
+str_extensions = "0.0.2"
+```
 
 ## Usage
 
@@ -230,7 +247,7 @@ different spellings of it. The second is a code generator with no allocator anyw
 contract for the storage, and every buffer a fixed array. Both are run by `cargo test`, in
 `tests/examples_run.rs`, which checks what they print rather than only that they built.
 
-## The Problem
+## The problem
 
 Rust gives you `to_uppercase` and `to_lowercase` and stops. Everything between a display label and an
 identifier is left to the caller, and the caller reaches for `split('_')`, which is wrong the moment
@@ -243,13 +260,14 @@ spelling converts to any other from any starting point.
 
 ## Support
 
-Whether you use this project, have learned something from it, or just like it, please consider supporting it by buying
-me a coffee, so I can dedicate more time on open-source projects like this :)
+Whether you use this project, have learned something from it, or just like it, please consider supporting it by buying me a coffee, so I can dedicate more time on open-source projects like this :)
 
 <a href="https://buymeacoffee.com/orgrinrt" target="_blank"><img src="https://www.buymeacoffee.com/assets/img/custom_images/orange_img.png" alt="Buy Me A Coffee" style="height: auto !important;width: auto !important;" ></a>
 
 ## License
 
-> You can check out the full license [here](https://github.com/orgrinrt/str_extensions/blob/main/LICENSE)
+> The project is licensed under the **Mozilla Public License 2.0**.
 
-This project is licensed under the terms of the **MPL-2.0** license.
+`SPDX-License-Identifier: MPL-2.0`
+
+> You can check out the full license [here](https://github.com/orgrinrt/str_extensions/blob/dev/LICENSE)

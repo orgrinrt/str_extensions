@@ -1,12 +1,12 @@
 [package]
 name = "str_extensions"
-authors = ["orgrinrt", "Hiisi Digital"]
 version = "0.0.2"
 edition = "2021"
 description = "Useful extension methods for strings in Rust, configurable by feature flags to minimise its footprint."
 license = "MPL-2.0"
 readme = "README.md"
 keywords = ["string", "format", "case", "snake", "camel"]
+exclude = [".idea/", "target/"]
 categories = ["text-processing", "value-formatting", "development-tools", "gui", "localization"]
 homepage = "https://github.com/orgrinrt/str_extensions"
 repository = "https://github.com/orgrinrt/str_extensions"
@@ -22,11 +22,11 @@ required-features = ["no_alloc", "full_format"]
 [dependencies]
 # The branch, until the no_std work there is on main. The lending API and the public word
 # sink both come from it.
-word_bounds = { git = "https://github.com/orgrinrt/word_bounds.git", branch = "dev", default-features = false }
+word_bounds = { git = "https://github.com/orgrinrt/word_bounds.git", branch = "dev", version = "0.0.2", default-features = false }
 # Only under `no_alloc`, where it supplies the lending contract `write_case` is written
 # against. notko is not on crates.io yet, so this is a git dependency, and a crate carrying
 # `no_alloc` cannot be published until it is.
-notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", optional = true, default-features = false }
+notko = { git = "https://github.com/orgrinrt/notko.git", branch = "dev", version = "0.0.1", optional = true, default-features = false }
 
 [features]
 default = ["full_format", "full_building", "full_type_coercion", "use_regex"]
