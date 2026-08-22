@@ -12,6 +12,22 @@
 
 </div>
 
+## Installation
+
+Not published yet, so this does not resolve. It is the command once a release
+lands.
+
+```bash
+cargo add str_extensions
+```
+
+Or in `Cargo.toml`:
+
+```toml
+[dependencies]
+str_extensions = "0.0.2"
+```
+
 ## Usage
 
 The case conversions are implemented for all types implementing `AsRef<str>`. This covers most of the usual string
@@ -231,7 +247,7 @@ different spellings of it. The second is a code generator with no allocator anyw
 contract for the storage, and every buffer a fixed array. Both are run by `cargo test`, in
 `tests/examples_run.rs`, which checks what they print rather than only that they built.
 
-## The Problem
+## The problem
 
 Rust gives you `to_uppercase` and `to_lowercase` and stops. Everything between a display label and an
 identifier is left to the caller, and the caller reaches for `split('_')`, which is wrong the moment
